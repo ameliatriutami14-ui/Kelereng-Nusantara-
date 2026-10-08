@@ -1,0 +1,2243 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>KELERENG NUSANTARA</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; font-family:system-ui,'Segoe UI',Roboto,sans-serif; user-select:none; -webkit-tap-highlight-color:transparent; }
+  html, body { width:100%; height:100%; overflow:hidden; }
+  body { background: radial-gradient(circle at 20% 30%, #4a3620, #1f1307); display:flex; align-items:center; justify-content:center; color:#f7e7b4; }
+  #app { width:100vw; height:100vh; background: linear-gradient(145deg, #5a4327, #2f1f0e); position:relative; overflow:hidden; }
+  .screen { display:none; flex-direction:column; width:100%; height:100%; }
+  .screen.active { display:flex; }
+  .home-wrap { display:flex; width:100%; height:100%; align-items:center; justify-content:center; gap:60px; padding:20px; }
+  .home-left { display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  .home-right { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; width:340px; }
+  .home-title { font-size: clamp(2.5rem, 6vw, 4.5rem); font-weight:900; color:#f7e7b4; text-shadow: 0 6px 0 #6b4f2a, 0 10px 20px black; letter-spacing:4px; line-height:0.95; text-align:center; }
+  .home-sub { color:#dac292; font-size:0.85rem; letter-spacing:2px; margin-top:12px; text-align:center; font-style:italic; text-shadow:0 2px 4px black; max-width:340px; }
+  .btn { background: linear-gradient(to bottom, #f3d9a4, #c49a5c); border:none; border-radius:60px; padding: 12px 20px; font-weight:700; font-size:1.05rem; color:#3b2a14; box-shadow: 0 5px 0 #7a5c34, 0 7px 12px rgba(0,0,0,0.5); transition: all 0.07s; cursor:pointer; border:1px solid #ffeac2; display:flex; align-items:center; justify-content:center; gap:8px; white-space:nowrap; }
+  .btn:active { transform: translateY(4px); box-shadow: 0 1px 0 #7a5c34, 0 4px 8px black; }
+  .btn:disabled { opacity:0.4; cursor:not-allowed; }
+  .btn-secondary { background: linear-gradient(to bottom, #a98b63, #6b4f30); color:#f7e7b4; box-shadow: 0 5px 0 #3d2e1b, 0 7px 12px black; border-color:#b89b6b; }
+  .btn-small { padding:8px 14px; font-size:0.9rem; }
+  .full { width:100%; }
+  .page-wrap { width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; padding:16px; overflow:hidden; }
+  .page-title { font-size:1.8rem; font-weight:800; text-shadow:0 4px 0 #6b4f2a; letter-spacing:2px; margin-bottom:4px; text-align:center; }
+  .input-group { width:100%; max-width:320px; }
+  .input-group label { color:#dac292; font-size:0.85rem; display:block; margin-bottom:4px; }
+  input, select { width:100%; padding:10px 16px; border-radius:40px; border:2px solid #b89b6b; background:#2e1f0e; color:#f7e7b4; font-weight:600; font-size:1rem; outline:none; }
+  input:focus, select:focus { border-color:#ffd966; }
+  .room-code { font-size:2rem; font-weight:900; color:#ffd966; letter-spacing:6px; text-shadow:0 4px 0 #6b4f2a; margin:8px 0; text-align:center; }
+  .lobby-list { background:#1f1307cc; border-radius:20px; padding:10px 14px; width:100%; max-width:360px; border:1px solid #b89b6b; }
+  .lobby-item { display:flex; align-items:center; gap:8px; padding:5px 6px; color:#f0e0b0; border-bottom:1px solid #5a4327; font-size:0.95rem; min-height:32px; }
+  .lobby-item:last-child { border-bottom:none; }
+  .status-message { color:#ffd966; font-weight:600; margin:6px 0; font-size:0.95rem; text-align:center; }
+  .row { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
+  .bet-page { display:flex; flex-direction:column; width:100%; height:100%; padding:16px 24px 20px; gap:14px; overflow:hidden; align-items:center; justify-content:center; }
+  .bet-header { text-align:center; flex:0 0 auto; }
+  .bet-header h1 { font-size:1.8rem; font-weight:800; text-shadow:0 4px 0 #6b4f2a; letter-spacing:2px; line-height:1.1; }
+  .bet-header p { color:#dac292; font-size:0.85rem; margin-top:4px; }
+  .bet-players-row { display:flex; gap:12px; justify-content:center; align-items:center; flex-wrap:nowrap; flex:0 0 auto; }
+  .bet-card { background:#1f1307cc; border:2px solid #b89b6b; border-radius:16px; padding:10px 12px; width:150px; text-align:center; display:flex; flex-direction:column; align-items:center; gap:7px; }
+  .bet-card .color-dot { width:22px; height:22px; }
+  .bet-card .bet-name-input { background: transparent; border: 1px dashed #5a4327; border-radius: 10px; color: #f7e7b4; font-weight: 700; font-size: 0.85rem; text-align: center; width: 100%; padding: 3px 6px; outline: none; }
+  .bet-card .bet-name-input:focus { border-color: #ffd966; background: #2e1f0e; }
+  .bet-card .bet-name-static { font-weight: 700; font-size: 0.85rem; }
+  .bet-card .bet-name-static.readonly { opacity: 0.85; }
+  .bet-controls { display:flex; align-items:center; gap:5px; background:#2e1f0e; border-radius:30px; padding:3px 5px; border:1px solid #5a4327; }
+  .bet-controls button { background:#d9b382; border:none; border-radius:50%; width:28px; height:28px; font-weight:900; font-size:1rem; cursor:pointer; color:#3b2a14; line-height:1; }
+  .bet-controls span { min-width:28px; text-align:center; font-weight:800; color:#ffd966; font-size:1.05rem; }
+  .bet-controls.bet-readonly { background: transparent; border: none; opacity: 0.7; cursor: default; padding: 3px 5px; }
+  .bet-controls.bet-readonly span { color: #ffd966; font-size: 1.05rem; font-weight: 800; }
+  .bet-card .bet-label { color:#dac292; font-size:0.7rem; }
+  .bet-pool-info { background:#2e1f0e; border:2px dashed #ffd966; border-radius:16px; padding:8px 22px; color:#ffd966; font-weight:700; font-size:1rem; text-align:center; white-space:nowrap; flex:0 0 auto; }
+  .bet-shape-label { color:#dac292; font-size:0.85rem; text-align:center; flex:0 0 auto; }
+  .shape-selector { display:flex; gap:10px; justify-content:center; flex:0 0 auto; }
+  .shape-btn { background:#1f1307cc; border:2px solid #b89b6b; border-radius:14px; padding:10px 18px; color:#f0e0b0; font-weight:700; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:3px; font-size:0.8rem; min-width:100px; transition:all 0.15s; }
+  .shape-btn.active { background:#ffd96640; border-color:#ffd966; box-shadow:0 0 12px #ffd96680; color:#ffd966; }
+  .shape-icon { font-size:1.5rem; }
+  .bet-footer { display:flex; gap:12px; justify-content:center; flex:0 0 auto; margin-top:6px; }
+  .howto-wrap { display:grid; grid-template-columns: 1fr 1.2fr; width:100%; height:100%; padding:12px 24px 14px; gap:18px; align-items:center; }
+  .howto-left { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; height:100%; }
+  .howto-left .page-title { margin:0; font-size:1.6rem; }
+  .howto-illustration { width:100%; max-width:260px; aspect-ratio:1/1; display:flex; align-items:center; justify-content:center; position:relative; }
+  .arena-3d { width:100%; height:100%; border-radius:50%; background: radial-gradient(circle at 35% 30%, #b89b6b 0%, #7a5c34 40%, #3d2e1b 100%); box-shadow: inset 0 8px 20px rgba(255,220,150,0.4), inset 0 -20px 40px rgba(0,0,0,0.7), 0 20px 40px rgba(0,0,0,0.6), 0 0 40px rgba(255,200,100,0.15); border: 5px solid #d9b382; position:relative; animation: rotateArena 25s linear infinite; }
+  @keyframes rotateArena { from { transform: rotate(0deg) scale(1); } 50% { transform: rotate(180deg) scale(1.02); } to { transform: rotate(360deg) scale(1); } }
+  .arena-3d::before { content:''; position:absolute; inset:8%; border-radius:50%; border:2px dashed rgba(217,179,130,0.5); }
+  .marble-3d { position:absolute; border-radius:50%; box-shadow: inset -3px -5px 8px rgba(0,0,0,0.5), inset 3px 3px 6px rgba(255,255,255,0.8), 0 4px 10px rgba(0,0,0,0.6); }
+  .marble-3d.target { width:14%; height:14%; background: radial-gradient(circle at 30% 30%, #fff 0%, #e74c3c 45%, #7d2318 100%); animation: bounceTarget 3s ease-in-out infinite; }
+  .marble-3d.target.t2 { animation-delay: 0.4s; }
+  .marble-3d.target.t3 { animation-delay: 0.8s; }
+  .marble-3d.target.t4 { animation-delay: 1.2s; }
+  @keyframes bounceTarget { 0%,100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-8px) scale(1.05); } }
+  .marble-3d.gacoan { width:17%; height:17%; background: radial-gradient(circle at 30% 30%, #fff 0%, #4A90E2 45%, #1c4a7a 100%); animation: pulseGacoan 1.6s ease-in-out infinite; left:50%; top:50%; transform: translate(-50%, -50%); box-shadow: inset -4px -6px 10px rgba(0,0,0,0.5), inset 3px 3px 8px rgba(255,255,255,0.9), 0 0 20px #4A90E2, 0 0 40px rgba(74,144,226,0.5); }
+  @keyframes pulseGacoan { 0%,100% { transform: translate(-50%, -50%) scale(1); } 50% { transform: translate(-50%, -50%) scale(1.18); } }
+  .howto-right { display:flex; flex-direction:column; gap:6px; height:100%; justify-content:center; overflow:hidden; }
+  .howto-step { background:#1f1307cc; border:1px solid #b89b6b; border-radius:12px; padding:8px 14px; display:flex; align-items:center; gap:10px; color:#f0e0b0; font-size:0.82rem; }
+  .howto-step-num { flex:0 0 auto; width:28px; height:28px; background:linear-gradient(to bottom,#f3d9a4,#c49a5c); border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:900; color:#3b2a14; font-size:0.9rem; }
+  .settings-page { width:100%; height:100%; overflow-y:auto; padding:16px 20px 20px; display:flex; flex-direction:column; align-items:center; }
+  .settings-inner { width:100%; max-width:640px; display:flex; flex-direction:column; gap:14px; padding-bottom:20px; }
+  .settings-header { text-align:center; margin-bottom:4px; }
+  .settings-header h1 { font-size:1.6rem; font-weight:800; text-shadow:0 3px 0 #6b4f2a; letter-spacing:2px; }
+  .settings-section-title { color:#dac292; font-size:0.75rem; font-weight:700; letter-spacing:2px; text-transform:uppercase; padding-left:4px; margin-top:4px; display:flex; align-items:center; gap:6px; }
+  .settings-card { background:linear-gradient(to bottom, #fbf3dd, #f0e2c0); border:2px solid #d9b382; border-radius:16px; padding:12px 16px; display:flex; align-items:center; gap:14px; color:#3b2a14; box-shadow:0 4px 10px rgba(0,0,0,0.3); }
+  .settings-card .s-icon { flex:0 0 auto; width:42px; height:42px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:1.3rem; color:#fff; }
+  .s-icon.musik { background:linear-gradient(135deg,#5b7cfa,#3a55d9); }
+  .s-icon.sfx { background:linear-gradient(135deg,#f5b642,#e08b1e); }
+  .s-icon.vol { background:linear-gradient(135deg,#f5b642,#e08b1e); }
+  .s-icon.lang { background:linear-gradient(135deg,#4a9e4a,#2e7a2e); }
+  .s-icon.game { background:linear-gradient(135deg,#8e5bd9,#5a2e9e); }
+  .settings-card .s-info { flex:1 1 auto; min-width:0; }
+  .settings-card .s-title { font-weight:800; font-size:0.95rem; color:#3b2a14; }
+  .settings-card .s-desc { font-size:0.75rem; color:#7a5c34; margin-top:2px; }
+  .toggle { position:relative; width:52px; height:28px; background:#c9b791; border-radius:20px; cursor:pointer; transition:background 0.2s; flex:0 0 auto; border:1px solid #a08660; }
+  .toggle::after { content:''; position:absolute; top:2px; left:2px; width:22px; height:22px; border-radius:50%; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.3); transition: left 0.2s; }
+  .toggle.on { background:#7bc47f; }
+  .toggle.on::after { left:26px; }
+  .slider-wrap { flex:1 1 auto; display:flex; align-items:center; gap:10px; min-width:0; }
+  input[type=range].vol-slider { -webkit-appearance: none; appearance: none; width:100%; height:8px; border-radius:6px; background:linear-gradient(to right, #f5b642 0%, #f5b642 var(--val,60%), #c9b791 var(--val,60%), #c9b791 100%); outline:none; cursor:pointer; padding:0; }
+  input[type=range].vol-slider::-webkit-slider-thumb { -webkit-appearance:none; width:22px; height:22px; border-radius:50%; background:#fff; box-shadow:0 2px 6px rgba(0,0,0,0.4); cursor:pointer; border:none; }
+  input[type=range].vol-slider::-moz-range-thumb { width:22px; height:22px; border-radius:50%; background:#fff; box-shadow:0 2px 6px rgba(0,0,0,0.4); cursor:pointer; border:none; }
+  .vol-label { font-size:0.8rem; font-weight:700; color:#3b2a14; min-width:36px; text-align:right; }
+  .lang-picker { display:flex; gap:6px; flex:0 0 auto; }
+  .lang-btn { background:#f0e2c0; border:2px solid #c9b791; border-radius:10px; padding:6px 14px; font-weight:800; font-size:0.8rem; color:#3b2a14; cursor:pointer; transition:all 0.15s; }
+  .lang-btn.active { background:linear-gradient(to bottom,#f5b642,#e08b1e); border-color:#a08660; color:#fff; box-shadow:0 0 12px #f5b64280; }
+  .settings-card.game-card { align-items: flex-start; padding:14px 18px; }
+  .settings-card.game-card .s-info p { font-size:0.82rem; line-height:1.5; color:#5a4327; margin-top:4px; }
+  #screenGame { display:none; flex-direction: column; width:100%; height:100%; position:relative; background:#2b1d0e; }
+  #screenGame.active { display:flex; }
+  .canvas-container { position:absolute; inset:0; overflow:hidden; background:#6b4f2a; }
+  canvas { display:block; width:100%; height:100%; touch-action:none; }
+  .hud-top-left { position:absolute; top:10px; left:10px; display:flex; flex-direction:column; gap:5px; z-index:10; width:220px; }
+  .hud-top-right { position:absolute; top:10px; right:10px; display:flex; flex-direction:column; gap:5px; align-items:flex-end; z-index:10; }
+  .hud-pill { background: rgba(31,19,7,0.85); border:1px solid #b89b6b; border-radius:30px; padding:6px 14px; color:#f7e7b4; font-weight:700; font-size:0.9rem; display:flex; align-items:center; gap:8px; backdrop-filter: blur(4px); transition: all 0.2s; width:100%; }
+  .hud-pill .color-dot { width:14px; height:14px; flex:0 0 auto; }
+  .hud-pill .hud-name { flex:1 1 auto; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .hud-pill.active-turn { background: rgba(255,217,102,0.3); border:2px solid #ffd966; box-shadow: 0 0 14px #ffd966; transform: scale(1.03); }
+  .hud-pill.dim { opacity: 0.55; }
+  .hud-marble-icon { display:inline-block; width:15px; height:15px; border-radius:50%; background: radial-gradient(circle at 30% 30%, #fff, #c0392b 60%, #7d2318); box-shadow:0 1px 2px black; flex:0 0 auto; }
+  .hud-count { color:#ffd966; flex:0 0 auto; display:flex; align-items:center; gap:4px; margin-left:auto; padding-left:6px; }
+  .hud-turn { background: rgba(31,19,7,0.9); border:2px solid #ffd966; border-radius:30px; padding:6px 16px; color:#ffd966; font-weight:800; font-size:0.95rem; text-align:right; box-shadow: 0 0 14px rgba(255,217,102,0.4); white-space:nowrap; }
+  .hud-pool { background: rgba(31,19,7,0.85); border:1px dashed #ffd966; border-radius:30px; padding:6px 14px; color:#ffd966; font-weight:700; font-size:0.9rem; white-space:nowrap; }
+  .hud-back-btn { position:absolute; bottom:10px; left:10px; background:rgba(46,31,14,0.9); border:2px solid #b89b6b; border-radius:30px; padding:6px 14px; color:#f7e7b4; font-weight:700; font-size:0.85rem; cursor:pointer; z-index:10; }
+  .turn-banner { position:absolute; top:50%; left:50%; transform: translate(-50%, -50%) scale(0.5); background: rgba(31,19,7,0.95); border:4px solid #ffd966; border-radius:30px; padding:16px 40px; color:#ffd966; font-weight:900; font-size:2rem; letter-spacing:3px; text-shadow: 0 4px 0 #6b4f2a; z-index:50; pointer-events:none; opacity:0; transition: all 0.4s ease-out; white-space:nowrap; box-shadow: 0 0 40px rgba(255,217,102,0.6); }
+  .turn-banner.show { opacity:1; transform: translate(-50%, -50%) scale(1); }
+  .toast { position:fixed; bottom:16px; left:50%; transform:translateX(-50%); background:#1f1307ee; color:#ffd966; padding:8px 22px; border-radius:40px; border:1px solid #b89b6b; font-weight:600; z-index:999; opacity:0; transition:opacity 0.25s; pointer-events:none; white-space:nowrap; font-size:0.9rem; max-width:90vw; overflow:hidden; text-overflow:ellipsis; }
+  .toast.show { opacity:1; }
+  .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.75); display:flex; align-items:center; justify-content:center; z-index:2000; }
+  .modal-box { background:linear-gradient(145deg,#5a4327,#2f1f0e); border:3px solid #b89b6b; border-radius:28px; padding:24px 28px; max-width:360px; width:88%; text-align:center; box-shadow:0 20px 40px black; }
+  .modal-box h3 { color:#ffd966; font-size:1.2rem; margin-bottom:8px; }
+  .modal-box p { color:#f0e0b0; font-size:0.95rem; margin-bottom:18px; }
+  .modal-actions { display:flex; gap:10px; justify-content:center; }
+  .modal-actions .btn { padding:10px 22px; font-size:0.95rem; }
+  @media (max-width: 820px) {
+    .bet-card { width:100px; padding:6px 8px; }
+    .bet-card .color-dot { width:16px; height:16px; }
+    .bet-card .bet-name-input, .bet-card .bet-name-static { font-size:0.7rem; }
+    .bet-controls button { width:20px; height:20px; font-size:0.8rem; }
+    .bet-controls span { font-size:0.85rem; min-width:20px; }
+    .howto-wrap { grid-template-columns: 1fr; gap:8px; padding:8px; }
+    .howto-step { font-size:0.72rem; padding:6px 10px; }
+    .howto-illustration { max-width:140px; }
+  }
+  @media (orientation: portrait) and (max-width: 700px) {
+    .home-wrap { flex-direction:column; gap:16px; }
+    .home-right { width:280px; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div class="screen active" id="screenHome">
+    <div class="home-wrap">
+      <div class="home-left">
+        <div class="home-title" data-i18n="title">KELERENG<br>NUSANTARA</div>
+        <div class="home-sub" data-i18n="subtitle">"Permainan Kelereng Tradisional dalam Dunia Digital"</div>
+      </div>
+      <div class="home-right">
+        <button class="btn full" data-action="play" data-i18n="btnPlay">🎮 MAIN</button>
+        <button class="btn btn-secondary full" data-action="multiplayer" data-i18n="btnMulti">👥 MULTIPLAYER</button>
+        <button class="btn btn-secondary full" data-action="vscomputer" data-i18n="btnVs">🤖 VS COMPUTER</button>
+        <button class="btn btn-secondary full" data-action="howto" data-i18n="btnHowto">📖 CARA BERMAIN</button>
+        <button class="btn btn-secondary full" data-action="settings" data-i18n="btnSettings">⚙ PENGATURAN</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen" id="screenPlay">
+    <div class="page-wrap">
+      <div class="page-title" data-i18n="menuTitle">MAIN</div>
+      <button class="btn" data-action="local2p" style="width:280px;" data-i18n="menu2p">👥 2 PEMAIN</button>
+      <button class="btn" data-action="local3p" style="width:280px;" data-i18n="menu3p">👥 3 PEMAIN</button>
+      <button class="btn" data-action="local4p" style="width:280px;" data-i18n="menu4p">👥 4 PEMAIN</button>
+      <button class="btn btn-secondary" data-action="backHome" style="width:280px; margin-top:10px;" data-i18n="back">← KEMBALI</button>
+    </div>
+  </div>
+
+  <div class="screen" id="screenBet">
+    <div class="bet-page">
+      <div class="bet-header">
+        <h1 data-i18n="betTitle">TARUHAN KELERENG</h1>
+        <p data-i18n="betSub">Klik nama pemain untuk mengubahnya. Pemenang membawa pulang SEMUA kelereng taruhan.</p>
+      </div>
+      <div class="bet-players-row" id="betPlayers"></div>
+      <div class="bet-pool-info" id="betPoolInfo">💰 Total Taruhan: 0 kelereng</div>
+      <div class="bet-shape-label" data-i18n="shapeLabel">Bentuk Papan Permainan</div>
+      <div class="shape-selector">
+        <div class="shape-btn active" data-shape="circle"><span class="shape-icon">⚪</span><span data-i18n="shapeCircle">LINGKARAN</span></div>
+        <div class="shape-btn" data-shape="triangle"><span class="shape-icon">🔺</span><span data-i18n="shapeTriangle">SEGITIGA</span></div>
+      </div>
+      <div class="bet-footer">
+        <button class="btn" data-action="startBetGame" id="startBetBtn" data-i18n="startBet">MULAI PERTANDINGAN</button>
+        <button class="btn btn-secondary" data-action="backFromBet" data-i18n="back">← KEMBALI</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen" id="screenVsComputer">
+    <div class="page-wrap">
+      <div class="page-title">VS COMPUTER</div>
+      <div class="input-group">
+        <label data-i18n="labelName">Nama Pemain</label>
+        <input type="text" id="playerNameVs" value="PEMAIN 1" maxlength="12">
+      </div>
+      <div class="input-group">
+        <label data-i18n="labelAI">Tingkat AI</label>
+        <select id="aiDifficulty">
+          <option value="easy" data-i18n="aiEasy">MUDAH</option>
+          <option value="normal" selected data-i18n="aiNormal">NORMAL</option>
+          <option value="hard" data-i18n="aiHard">SULIT</option>
+        </select>
+      </div>
+      <button class="btn" data-action="gotoBetVsComputer" style="width:280px;" data-i18n="next">LANJUT →</button>
+      <button class="btn btn-secondary" data-action="backHome" style="width:280px;" data-i18n="back">← KEMBALI</button>
+    </div>
+  </div>
+
+  <div class="screen" id="screenMultiplayer">
+    <div class="page-wrap">
+      <div class="page-title">MULTIPLAYER</div>
+      <button class="btn" data-action="createRoom" style="width:280px;" data-i18n="createRoom">👥 BUAT ROOM</button>
+      <button class="btn btn-secondary" data-action="joinRoom" style="width:280px;" data-i18n="joinRoom">🔗 GABUNG ROOM</button>
+      <button class="btn btn-secondary" data-action="backHome" style="width:280px; margin-top:10px;" data-i18n="back">← KEMBALI</button>
+    </div>
+  </div>
+
+  <div class="screen" id="screenCreateRoom">
+    <div class="page-wrap">
+      <div class="page-title" data-i18n="createRoom">BUAT ROOM</div>
+      <div class="input-group">
+        <label data-i18n="labelName">Nama Pemain</label>
+        <input type="text" id="hostName" value="" maxlength="12" placeholder="Amelia">
+      </div>
+      <div class="input-group">
+        <label data-i18n="labelCount">Jumlah Pemain</label>
+        <select id="maxPlayers">
+          <option value="2">2</option>
+          <option value="3">3</option>
+          <option value="4" selected>4</option>
+        </select>
+      </div>
+      <button class="btn" data-action="doCreateRoom" style="width:280px;" data-i18n="createRoom">BUAT ROOM</button>
+      <button class="btn btn-secondary" data-action="backMultiplayer" style="width:280px;" data-i18n="back">← KEMBALI</button>
+    </div>
+  </div>
+
+  <div class="screen" id="screenRoomLobby">
+    <div class="page-wrap">
+      <div class="page-title">ROOM KELERENG</div>
+      <div class="room-code" id="roomCodeDisplay">KLR-XXXX</div>
+      <div class="lobby-list" id="lobbyList"></div>
+      <div class="status-message" id="lobbyStatus" data-i18n="waitingPlayers">MENUNGGU PEMAIN...</div>
+      <div class="row">
+        <button class="btn btn-small" data-action="copyRoomCode" data-i18n="copyCode">📋 SALIN KODE</button>
+        <button class="btn btn-small btn-secondary" data-action="inviteFriend" data-i18n="invite">🔗 UNDANG TEMAN</button>
+      </div>
+      <button class="btn" id="startRoomBtn" data-action="goToRoomBet" disabled style="margin-top:10px; width:280px;" data-i18n="nextBet">LANJUT KE TARUHAN →</button>
+      <button class="btn btn-secondary" data-action="leaveRoom" style="width:280px;" data-i18n="back">← KELUAR ROOM</button>
+    </div>
+  </div>
+
+  <div class="screen" id="screenJoinRoom">
+    <div class="page-wrap">
+      <div class="page-title" data-i18n="joinRoom">GABUNG ROOM</div>
+      <div class="input-group">
+        <label data-i18n="labelCode">Kode Room</label>
+        <input type="text" id="joinRoomCode" placeholder="KLR-XXXX" maxlength="8" style="text-transform:uppercase;" value="">
+      </div>
+      <div class="input-group">
+        <label data-i18n="labelName">Nama Pemain</label>
+        <input type="text" id="joinName" value="" maxlength="12" placeholder="Budi">
+      </div>
+      <button class="btn" data-action="doJoinRoom" style="width:280px;" data-i18n="joinBtn">GABUNG</button>
+      <div class="status-message" id="joinStatus"></div>
+      <button class="btn btn-secondary" data-action="backMultiplayer" style="width:280px;" data-i18n="back">← KEMBALI</button>
+    </div>
+  </div>
+
+  <div class="screen" id="screenHowTo">
+    <div class="howto-wrap">
+      <div class="howto-left">
+        <div class="page-title" data-i18n="howtoTitle">CARA BERMAIN</div>
+        <div class="howto-illustration">
+          <div class="arena-3d">
+            <div class="marble-3d target" style="top:22%; left:20%;"></div>
+            <div class="marble-3d target t2" style="top:30%; left:68%;"></div>
+            <div class="marble-3d target t3" style="top:65%; left:32%;"></div>
+            <div class="marble-3d target t4" style="top:62%; left:70%;"></div>
+            <div class="marble-3d gacoan"></div>
+          </div>
+        </div>
+      </div>
+      <div class="howto-right">
+        <div class="howto-step"><div class="howto-step-num">1</div><div data-i18n="step1">Setiap pemain bertaruh kelereng sebelum pertandingan dimulai.</div></div>
+        <div class="howto-step"><div class="howto-step-num">2</div><div data-i18n="step2">Pilih bentuk papan: Lingkaran atau Segitiga.</div></div>
+        <div class="howto-step"><div class="howto-step-num">3</div><div data-i18n="step3">Tarik dari kelereng gacoan untuk mengarahkan dan menentukan kekuatan sentilan.</div></div>
+        <div class="howto-step"><div class="howto-step-num">4</div><div data-i18n="step4">Lepaskan untuk meluncurkan kelereng ke arah target.</div></div>
+        <div class="howto-step"><div class="howto-step-num">5</div><div data-i18n="step5">Kelereng target yang keluar dari papan = 1 kelereng untuk Anda.</div></div>
+        <div class="howto-step"><div class="howto-step-num">6</div><div data-i18n="step6">Giliran berpindah setelah semua kelereng berhenti bergerak.</div></div>
+        <div class="howto-step"><div class="howto-step-num">7</div><div data-i18n="step7">Pemenang membawa pulang SEMUA kelereng taruhan!</div></div>
+        <button class="btn btn-secondary" data-action="backHome" style="width:100%; margin-top:4px;" data-i18n="back">← KEMBALI</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen" id="screenSettings">
+    <div class="settings-page">
+      <div class="settings-inner">
+        <div class="settings-header">
+          <h1 data-i18n="settingsTitle">PENGATURAN</h1>
+        </div>
+        <div class="settings-section-title" data-i18n="sectionAudio">🔊 AUDIO</div>
+        <div class="settings-card">
+          <div class="s-icon musik">🎵</div>
+          <div class="s-info">
+            <div class="s-title" data-i18n="musicTitle">Musik</div>
+            <div class="s-desc" data-i18n="musicDesc">Musik latar belakang</div>
+          </div>
+          <div class="toggle on" id="toggleMusic"></div>
+        </div>
+        <div class="settings-card">
+          <div class="s-icon sfx">🔔</div>
+          <div class="s-info">
+            <div class="s-title" data-i18n="sfxTitle">Efek Suara</div>
+            <div class="s-desc" data-i18n="sfxDesc">Suara tombol & gameplay</div>
+          </div>
+          <div class="toggle on" id="toggleSfx"></div>
+        </div>
+        <div class="settings-card">
+          <div class="s-icon vol">🔊</div>
+          <div class="s-info">
+            <div class="s-title" data-i18n="volTitle">Volume</div>
+            <div class="s-desc" data-i18n="volDesc">Kenyaringan suara</div>
+          </div>
+          <div class="slider-wrap">
+            <input type="range" class="vol-slider" id="volSlider" min="0" max="100" value="60">
+            <span class="vol-label" id="volLabel">60%</span>
+          </div>
+        </div>
+        <div class="settings-section-title" data-i18n="sectionLang">🌐 BAHASA</div>
+        <div class="settings-card">
+          <div class="s-icon lang">🌐</div>
+          <div class="s-info">
+            <div class="s-title" data-i18n="langTitle">Bahasa</div>
+            <div class="s-desc" data-i18n="langDesc">Pilih bahasa tampilan</div>
+          </div>
+          <div class="lang-picker">
+            <button class="lang-btn active" data-lang="id">ID</button>
+            <button class="lang-btn" data-lang="en">EN</button>
+          </div>
+        </div>
+        <div class="settings-section-title" data-i18n="sectionGame">🎮 GAME</div>
+        <div class="settings-card game-card">
+          <div class="s-icon game">🎮</div>
+          <div class="s-info">
+            <div class="s-title">KELERENG NUSANTARA</div>
+            <p data-i18n="gameDesc">Kelereng Nusantara adalah adaptasi digital dari permainan kelereng tradisional Indonesia.</p>
+          </div>
+        </div>
+        <button class="btn btn-secondary" data-action="backHome" style="width:100%; max-width:360px; align-self:center; margin-top:10px;" data-i18n="back">← KEMBALI</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen" id="screenGame">
+    <div class="canvas-container">
+      <canvas id="gameCanvas"></canvas>
+    </div>
+    <div class="hud-top-left" id="hudTopLeft"></div>
+    <div class="hud-top-right">
+      <div class="hud-turn" id="hudTurn">🎯 GILIRAN: —</div>
+      <div class="hud-pool" id="hudPool">💰 Total Taruhan: 0</div>
+    </div>
+    <div class="turn-banner" id="turnBanner">GILIRAN: PEMAIN 1</div>
+    <button class="hud-back-btn" data-action="tryQuitGame">← KELUAR</button>
+  </div>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+// ============================================================
+// TRANSLATIONS
+// ============================================================
+const I18N = {
+  id: {
+    title: 'KELERENG<br>NUSANTARA',
+    subtitle: '"Permainan Kelereng Tradisional dalam Dunia Digital"',
+    btnPlay: '🎮 MAIN', btnMulti: '👥 MULTIPLAYER', btnVs: '🤖 VS COMPUTER',
+    btnHowto: '📖 CARA BERMAIN', btnSettings: '⚙ PENGATURAN',
+    menuTitle: 'MAIN', menu2p: '👥 2 PEMAIN', menu3p: '👥 3 PEMAIN', menu4p: '👥 4 PEMAIN',
+    back: '← KEMBALI', next: 'LANJUT →',
+    betTitle: 'TARUHAN KELERENG',
+    betSub: 'Klik nama pemain untuk mengubahnya. Pemenang membawa pulang SEMUA kelereng taruhan.',
+    shapeLabel: 'Bentuk Papan Permainan', shapeCircle: 'LINGKARAN', shapeTriangle: 'SEGITIGA',
+    startBet: 'MULAI PERTANDINGAN',
+    labelName: 'Nama Pemain', labelAI: 'Tingkat AI', labelCount: 'Jumlah Pemain', labelCode: 'Kode Room',
+    aiEasy: 'MUDAH', aiNormal: 'NORMAL', aiHard: 'SULIT',
+    createRoom: '👥 BUAT ROOM', joinRoom: '🔗 GABUNG ROOM',
+    waitingPlayers: 'MENUNGGU PEMAIN...', copyCode: '📋 SALIN KODE', invite: '🔗 UNDANG TEMAN',
+    nextBet: 'LANJUT KE TARUHAN →', joinBtn: 'GABUNG',
+    howtoTitle: 'CARA BERMAIN',
+    step1: 'Setiap pemain bertaruh kelereng sebelum pertandingan dimulai.',
+    step2: 'Pilih bentuk papan: Lingkaran atau Segitiga.',
+    step3: 'Tarik dari kelereng gacoan untuk mengarahkan dan menentukan kekuatan sentilan.',
+    step4: 'Lepaskan untuk meluncurkan kelereng ke arah target.',
+    step5: 'Kelereng target yang keluar dari papan = 1 kelereng untuk Anda.',
+    step6: 'Giliran berpindah setelah semua kelereng berhenti bergerak.',
+    step7: 'Pemenang membawa pulang SEMUA kelereng taruhan!',
+    settingsTitle: 'PENGATURAN', sectionAudio: '🔊 AUDIO', sectionLang: '🌐 BAHASA', sectionGame: '🎮 GAME',
+    musicTitle: 'Musik', musicDesc: 'Musik latar belakang',
+    sfxTitle: 'Efek Suara', sfxDesc: 'Suara tombol & gameplay',
+    volTitle: 'Volume', volDesc: 'Kenyaringan suara',
+    langTitle: 'Bahasa', langDesc: 'Pilih bahasa tampilan',
+    gameDesc: 'Kelereng Nusantara adalah adaptasi digital dari permainan kelereng tradisional Indonesia.',
+    kelereng: 'Kelereng', turnLabel: '🎯 GILIRAN:', poolLabel: '💰 Total Taruhan: {n}',
+    yourTurn: 'Giliran Anda!', notYourTurn: 'Bukan giliran Anda',
+  },
+  en: {
+    title: 'KELERENG<br>NUSANTARA',
+    subtitle: '"Traditional Marbles Game in Digital World"',
+    btnPlay: '🎮 PLAY', btnMulti: '👥 MULTIPLAYER', btnVs: '🤖 VS COMPUTER',
+    btnHowto: '📖 HOW TO PLAY', btnSettings: '⚙ SETTINGS',
+    menuTitle: 'PLAY', menu2p: '👥 2 PLAYERS', menu3p: '👥 3 PLAYERS', menu4p: '👥 4 PLAYERS',
+    back: '← BACK', next: 'NEXT →',
+    betTitle: 'MARBLE BET', betSub: 'Click player name to edit. Winner takes ALL bet marbles.',
+    shapeLabel: 'Board Shape', shapeCircle: 'CIRCLE', shapeTriangle: 'TRIANGLE',
+    startBet: 'START MATCH',
+    labelName: 'Player Name', labelAI: 'AI Level', labelCount: 'Number of Players', labelCode: 'Room Code',
+    aiEasy: 'EASY', aiNormal: 'NORMAL', aiHard: 'HARD',
+    createRoom: '👥 CREATE ROOM', joinRoom: '🔗 JOIN ROOM',
+    waitingPlayers: 'WAITING FOR PLAYERS...', copyCode: '📋 COPY CODE', invite: '🔗 INVITE FRIEND',
+    nextBet: 'NEXT TO BET →', joinBtn: 'JOIN',
+    howtoTitle: 'HOW TO PLAY',
+    step1: 'Each player bets marbles before the match starts.',
+    step2: 'Choose board shape: Circle or Triangle.',
+    step3: 'Drag from the shooter marble to aim and set power.',
+    step4: 'Release to launch the marble toward targets.',
+    step5: 'Target marbles leaving the board = 1 marble for you.',
+    step6: 'Turn passes after all marbles stop moving.',
+    step7: 'Winner takes ALL bet marbles!',
+    settingsTitle: 'SETTINGS', sectionAudio: '🔊 AUDIO', sectionLang: '🌐 LANGUAGE', sectionGame: '🎮 GAME',
+    musicTitle: 'Music', musicDesc: 'Background music',
+    sfxTitle: 'Sound Effects', sfxDesc: 'Button & gameplay sounds',
+    volTitle: 'Volume', volDesc: 'Sound loudness',
+    langTitle: 'Language', langDesc: 'Choose display language',
+    gameDesc: 'Kelereng Nusantara is a digital adaptation of Indonesian traditional marbles.',
+    kelereng: 'Marbles', turnLabel: '🎯 TURN:', poolLabel: '💰 Total Bet: {n}',
+    yourTurn: 'Your turn!', notYourTurn: 'Not your turn',
+  },
+};
+
+function t(key, vars) {
+  let s = (I18N[progress.language] && I18N[progress.language][key]) || I18N.id[key] || key;
+  if (vars) for (const k in vars) s = s.replace('{'+k+'}', vars[k]);
+  return s;
+}
+
+function applyTranslations() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.dataset.i18n;
+    const val = t(key);
+    if (val.includes('<br>')) el.innerHTML = val;
+    else el.textContent = val;
+  });
+  document.querySelectorAll('.bet-label').forEach(el => el.textContent = t('kelereng'));
+  const poolEl = document.getElementById('betPoolInfo');
+  if (poolEl) poolEl.textContent = `💰 Total Taruhan: ${state.totalBet} kelereng`;
+  const startBtn = document.getElementById('startRoomBtn');
+  if (startBtn && mp.isHost) startBtn.textContent = t('nextBet');
+  if (state.screen === 'roomLobby') renderLobbyOnline();
+  updateHUDPool();
+  updateHUDTurn();
+}
+
+// ============================================================
+// FIREBASE
+// ============================================================
+const firebaseConfig = {
+  databaseURL: "https://kelereng-nusantara-default-rtdb.asia-southeast1.firebasedatabase.app"
+};
+let db = null;
+let firebaseReady = false;
+try {
+  if (typeof firebase !== 'undefined') {
+    firebase.initializeApp(firebaseConfig);
+    db = firebase.database();
+    firebaseReady = true;
+    console.log('✅ Firebase ready');
+  }
+} catch (e) { console.error('❌ Firebase init error:', e); }
+
+// ============================================================
+// MULTIPLAYER STATE
+// ============================================================
+const mp = {
+  roomCode: null,
+  isHost: false,
+  myId: 'p_' + Math.random().toString(36).substr(2, 8),
+  myName: '',
+  myColor: 0,
+  playersRef: null,
+  roomRef: null,
+  betsRef: null,
+  boardShapeRef: null,
+  gameStateRef: null,
+  roomStateRef: null,
+  shotRef: null,
+  connected: false,
+  isOnlineMode: false,
+  listeners: [],
+  lastProcessedShotId: 0,
+  fallbackTimer: null,
+  pollTimer: null,
+};
+
+// ============================================================
+// GAME STATE
+// ============================================================
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const toastEl = document.getElementById('toast');
+const turnBannerEl = document.getElementById('turnBanner');
+
+let audioCtx = null;
+let masterGain = null;
+let musicGain = null;
+let sfxGain = null;
+let musicTimer = null;
+let audioInitialized = false;
+let musicPlaying = false;
+let musicPausedByVisibility = false;
+
+const PHASE = { IDLE:'idle', SHOOTING:'shooting', SETTLING:'settling', SWITCHING:'switching' };
+const BOARD_SHAPE = { CIRCLE:'circle', TRIANGLE:'triangle' };
+
+const state = {
+  screen: 'home',
+  players: [],
+  activePlayerIndex: 0,
+  targets: [],
+  gacoans: [],
+  marbles: [],
+  gameActive: false,
+  gameOver: false,
+  currentDrag: null,
+  aimingAngle: 0,
+  phase: PHASE.IDLE,
+  aiThinking: false,
+  aiTimer: null,
+  switchTimer: null,
+  settleTimer: null,
+  lobbyPlayers: [],
+  lobbyMaxPlayers: 4,
+  aiDifficulty: 'normal',
+  lastTime: 0,
+  animationId: null,
+  betAmounts: [5,5,5,5],
+  totalBet: 0,
+  pendingConfig: null,
+  betReturnScreen: 'play',
+  boardShape: BOARD_SHAPE.CIRCLE,
+  myIndexInPlayers: 0,
+  // Rasio acuan yang dipakai host untuk hitung posisi
+  hostCanvasW: 1000,
+  hostCanvasH: 700,
+};
+
+const FRICTION = 0.988;
+const MIN_SPEED = 0.15;
+const WALL_BOUNCE = 0.65;
+const TARGET_RADIUS = 11;
+const GACOAN_RADIUS = 13;
+const BOARD_RADIUS_RATIO = 0.42;
+
+const PLAYER_COLORS = ['#4A90E2', '#E67E22', '#9B59B6', '#2ECC71'];
+const TARGET_COLOR = '#C0392B';
+const TARGET_COLOR_ALT = '#E74C3C';
+
+const STORAGE_KEY = 'kelereng_nusantara_v26';
+
+// ============================================================
+// AUDIO
+// ============================================================
+function initAudio() {
+  if (audioInitialized && audioCtx) {
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    updateVolumeGains();
+    return;
+  }
+  try {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    masterGain = audioCtx.createGain();
+    masterGain.gain.value = 1;
+    masterGain.connect(audioCtx.destination);
+    musicGain = audioCtx.createGain();
+    musicGain.gain.value = 0;
+    musicGain.connect(masterGain);
+    sfxGain = audioCtx.createGain();
+    sfxGain.gain.value = 0;
+    sfxGain.connect(masterGain);
+    audioInitialized = true;
+    updateVolumeGains();
+  } catch(e) { console.error('Audio init error', e); }
+}
+
+function updateVolumeGains() {
+  if (!audioCtx || !musicGain || !sfxGain) return;
+  const now = audioCtx.currentTime;
+  musicGain.gain.cancelScheduledValues(now);
+  sfxGain.gain.cancelScheduledValues(now);
+  musicGain.gain.linearRampToValueAtTime(progress.musicEnabled ? progress.volumeLevel : 0, now + 0.05);
+  sfxGain.gain.linearRampToValueAtTime(progress.sfxEnabled ? progress.volumeLevel : 0, now + 0.05);
+}
+
+function playTone(freq, duration, type='sine', volume=0.15) {
+  if (!progress.sfxEnabled) return;
+  try {
+    initAudio();
+    if (!audioCtx || !sfxGain) return;
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = type; osc.frequency.value = freq;
+    gain.gain.value = volume;
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+    osc.connect(gain); gain.connect(sfxGain);
+    osc.start(); osc.stop(audioCtx.currentTime + duration);
+  } catch(e) {}
+}
+
+const sfxShoot = () => { playTone(600,0.08,'square',0.4); playTone(400,0.12,'sine',0.3); };
+const sfxCollision = () => playTone(200,0.05,'triangle',0.3);
+const sfxTargetOut = () => { playTone(800,0.1,'sine',0.5); playTone(1000,0.15,'sine',0.4); };
+const sfxTurn = () => { playTone(700,0.1,'sine',0.4); playTone(900,0.12,'sine',0.35); };
+const sfxWin = () => [523,659,784,1047].forEach((f,i)=>setTimeout(()=>playTone(f,0.2,'sine',0.4),i*120));
+const sfxBet = () => playTone(700,0.06,'triangle',0.35);
+
+// ============================================================
+// BACKGROUND MUSIC
+// ============================================================
+function startMusic() {
+  if (!progress.musicEnabled) return;
+  if (musicTimer) return;
+  initAudio();
+  if (!audioCtx || !musicGain) return;
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  musicPlaying = true;
+  try {
+    const notes = [
+      261.63, 329.63, 392.00, 523.25, 392.00, 329.63,
+      293.66, 349.23, 440.00, 587.33, 440.00, 349.23,
+      329.63, 392.00, 493.88, 659.25, 493.88, 392.00,
+      261.63, 329.63, 392.00, 523.25, 392.00, 329.63,
+    ];
+    const noteDuration = 0.5;
+    let currentIndex = 0;
+    let nextNoteTime = audioCtx.currentTime + 0.1;
+    function scheduleNote() {
+      if (!progress.musicEnabled || !musicPlaying) { musicTimer = null; return; }
+      if (!audioCtx || !musicGain) { musicTimer = null; return; }
+      const freq = notes[currentIndex];
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine'; osc.frequency.value = freq;
+      const vol = 0.06;
+      gain.gain.setValueAtTime(0, nextNoteTime);
+      gain.gain.linearRampToValueAtTime(vol, nextNoteTime + 0.05);
+      gain.gain.exponentialRampToValueAtTime(0.001, nextNoteTime + noteDuration * 0.9);
+      osc.connect(gain); gain.connect(musicGain);
+      osc.start(nextNoteTime); osc.stop(nextNoteTime + noteDuration);
+      if (currentIndex % 4 === 0) {
+        const bassOsc = audioCtx.createOscillator();
+        const bassGain = audioCtx.createGain();
+        bassOsc.type = 'triangle'; bassOsc.frequency.value = notes[currentIndex] / 2;
+        const bassVol = 0.05;
+        bassGain.gain.setValueAtTime(0, nextNoteTime);
+        bassGain.gain.linearRampToValueAtTime(bassVol, nextNoteTime + 0.1);
+        bassGain.gain.exponentialRampToValueAtTime(0.001, nextNoteTime + noteDuration * 1.8);
+        bassOsc.connect(bassGain); bassGain.connect(musicGain);
+        bassOsc.start(nextNoteTime); bassOsc.stop(nextNoteTime + noteDuration * 2);
+      }
+      nextNoteTime += noteDuration;
+      currentIndex = (currentIndex + 1) % notes.length;
+      musicTimer = setTimeout(scheduleNote, noteDuration * 1000 - 20);
+    }
+    scheduleNote();
+  } catch(e) { console.warn('Music error', e); }
+}
+function stopMusic() {
+  musicPlaying = false;
+  if (musicTimer) { clearTimeout(musicTimer); musicTimer = null; }
+}
+
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    if (audioCtx && audioCtx.state === 'running') audioCtx.suspend();
+    if (musicPlaying) {
+      musicPausedByVisibility = true;
+      musicPlaying = false;
+      if (musicTimer) { clearTimeout(musicTimer); musicTimer = null; }
+    }
+  } else {
+    if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+    if (musicPausedByVisibility && progress.musicEnabled) {
+      musicPausedByVisibility = false;
+      setTimeout(() => { if (progress.musicEnabled && !musicPlaying) startMusic(); }, 150);
+    }
+  }
+});
+
+// ============================================================
+// PROGRESS
+// ============================================================
+function loadProgress() {
+  try { const d = localStorage.getItem(STORAGE_KEY); if (d) return JSON.parse(d); } catch(e){}
+  return { musicEnabled:true, sfxEnabled:true, volumeLevel:0.6, language:'id' };
+}
+function saveProgress(p) { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(p)); } catch(e){} }
+let progress = loadProgress();
+updateSoundUI();
+
+function updateSoundUI() {
+  const slider = document.getElementById('volSlider');
+  const label = document.getElementById('volLabel');
+  if (slider) {
+    slider.value = Math.round(progress.volumeLevel * 100);
+    slider.style.setProperty('--val', (progress.volumeLevel*100) + '%');
+  }
+  if (label) label.textContent = Math.round(progress.volumeLevel * 100) + '%';
+  const tM = document.getElementById('toggleMusic');
+  const tS = document.getElementById('toggleSfx');
+  if (tM) tM.classList.toggle('on', progress.musicEnabled);
+  if (tS) tS.classList.toggle('on', progress.sfxEnabled);
+  document.querySelectorAll('.lang-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.lang === progress.language);
+  });
+  initAudio();
+  updateVolumeGains();
+}
+
+// ============================================================
+// SCREEN NAV
+// ============================================================
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const el = document.getElementById('screen' + name.charAt(0).toUpperCase() + name.slice(1));
+  if (el) el.classList.add('active');
+  state.screen = name;
+  if (name === 'vsComputer') {
+    const input = document.getElementById('playerNameVs');
+    if (input) input.value = 'PEMAIN 1';
+  }
+  if (name === 'joinRoom') {
+    const code = document.getElementById('joinRoomCode');
+    const nm = document.getElementById('joinName');
+    const st = document.getElementById('joinStatus');
+    if (code) code.value = '';
+    if (nm) nm.value = '';
+    if (st) st.textContent = '';
+  }
+  if (name === 'createRoom') {
+    const nm = document.getElementById('hostName');
+    if (nm) nm.value = '';
+  }
+}
+
+// ============================================================
+// FIREBASE ROOM
+// ============================================================
+function generateRoomCode() {
+  return 'KLR-' + Math.floor(1000 + Math.random() * 9000);
+}
+
+function createFirebaseRoom(code, hostName, maxPlayers, onReady) {
+  if (!firebaseReady || !db) { alert('Firebase tidak siap!'); return; }
+  const roomRef = db.ref('rooms/' + code);
+  roomRef.once('value').then(snap => {
+    if (snap.exists()) { alert('Kode room sudah terpakai.'); return; }
+    roomRef.set({
+      host: mp.myId,
+      maxPlayers: maxPlayers,
+      state: 'lobby',
+      boardShape: 'circle',
+      bets: [5,5,5,5],
+      shot: null,
+      createdAt: Date.now(),
+      players: {},
+    }).then(() => {
+      mp.roomCode = code;
+      mp.isHost = true;
+      mp.myName = hostName;
+      mp.myColor = 0;
+      mp.roomRef = roomRef;
+      mp.playersRef = roomRef.child('players');
+      mp.betsRef = roomRef.child('bets');
+      mp.boardShapeRef = roomRef.child('boardShape');
+      mp.gameStateRef = roomRef.child('gameState');
+      mp.roomStateRef = roomRef.child('state');
+      mp.shotRef = roomRef.child('shot');
+      mp.playersRef.child(mp.myId).set({ name: hostName, color: 0, joinedAt: Date.now() });
+      document.getElementById('roomCodeDisplay').textContent = code;
+      showScreen('roomLobby');
+      if (onReady) onReady();
+    }).catch(err => { alert('Gagal buat room: ' + err.message); });
+  });
+}
+
+function joinFirebaseRoom(code, myName, onReady) {
+  if (!firebaseReady || !db) { alert('Firebase tidak siap!'); return; }
+  const roomRef = db.ref('rooms/' + code);
+  roomRef.once('value').then(snap => {
+    if (!snap.exists()) {
+      document.getElementById('joinStatus').textContent = '❌ Room tidak ditemukan!';
+      return;
+    }
+    const data = snap.val();
+    const players = data.players || {};
+    const count = Object.keys(players).length;
+    if (count >= data.maxPlayers) {
+      document.getElementById('joinStatus').textContent = '❌ Room penuh!';
+      return;
+    }
+    mp.roomCode = code;
+    mp.isHost = false;
+    mp.myName = myName;
+    mp.roomRef = roomRef;
+    mp.playersRef = roomRef.child('players');
+    mp.betsRef = roomRef.child('bets');
+    mp.boardShapeRef = roomRef.child('boardShape');
+    mp.gameStateRef = roomRef.child('gameState');
+    mp.roomStateRef = roomRef.child('state');
+    mp.shotRef = roomRef.child('shot');
+    let usedColors = Object.values(players).map(p => p.color);
+    let myColor = 0;
+    for (let i = 0; i < 4; i++) if (!usedColors.includes(i)) { myColor = i; break; }
+    mp.myColor = myColor;
+    mp.playersRef.child(mp.myId).set({ name: myName, color: myColor, joinedAt: Date.now() })
+    .then(() => {
+      document.getElementById('joinStatus').textContent = '✅ Berhasil bergabung!';
+      document.getElementById('roomCodeDisplay').textContent = code;
+      if (onReady) onReady();
+      setTimeout(() => showScreen('roomLobby'), 400);
+    });
+  });
+}
+
+// ============================================================
+// LISTENER
+// ============================================================
+function listenToRoom() {
+  if (!mp.roomRef) return;
+
+  const playersCb = mp.playersRef.on('value', snap => {
+    const data = snap.val() || {};
+    state.lobbyPlayers = Object.keys(data).map(id => ({
+      id: id, name: data[id].name, color: data[id].color,
+    })).sort((a,b) => a.color - b.color);
+    renderLobbyOnline();
+
+    if (state.pendingConfig && state.screen === 'bet') {
+      let changed = false;
+      state.lobbyPlayers.forEach((lp, i) => {
+        if (state.pendingConfig[i] && state.pendingConfig[i].name !== lp.name) {
+          const activeEl = document.activeElement;
+          const isEditingMe = activeEl && activeEl.classList.contains('bet-name-input')
+                              && parseInt(activeEl.dataset.nameIdx) === i;
+          if (!isEditingMe) {
+            state.pendingConfig[i].name = lp.name;
+            changed = true;
+          }
+        }
+      });
+      if (changed) renderBetPage();
+    }
+  });
+
+  const betsCb = mp.betsRef.on('value', snap => {
+    const bets = snap.val();
+    if (!bets) return;
+    const arr = [];
+    for (let i = 0; i < 4; i++) arr.push(bets[i] !== undefined ? bets[i] : 5);
+    state.betAmounts = arr;
+    arr.forEach((v, i) => {
+      const el = document.getElementById(`betVal_${i}`);
+      if (el) el.textContent = v;
+    });
+    updateBetPool();
+  });
+
+  const boardCb = mp.boardShapeRef.on('value', snap => {
+    const shape = snap.val();
+    if (!shape) return;
+    state.boardShape = shape;
+    document.querySelectorAll('.shape-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.shape === shape);
+    });
+  });
+
+  const gameStateCb = mp.gameStateRef.on('value', snap => {
+    const gs = snap.val();
+    if (!gs) return;
+    if (mp.isHost) return;
+    applyGameStateFromHost(gs);
+  });
+
+  const shotCb = mp.shotRef.on('value', snap => {
+    if (!mp.isHost) return;
+    const shot = snap.val();
+    if (!shot) return;
+    if (!shot.id || shot.id <= mp.lastProcessedShotId) return;
+    mp.lastProcessedShotId = shot.id;
+    const g = state.gacoans[shot.playerIdx];
+    if (g && g.alive) {
+      g.vx = shot.vx;
+      g.vy = shot.vy;
+      state.phase = PHASE.SHOOTING;
+      sfxShoot();
+      sendGameStateToFirebase();
+    }
+  });
+
+  const roomCb = mp.roomRef.on('value', snap => {
+    const data = snap.val();
+    if (!data) return;
+
+    if (data.state === 'bet' && !mp.isHost && state.screen !== 'bet') {
+      const playersArr = Object.keys(data.players || {})
+        .map(id => ({
+          id: id, name: data.players[id].name,
+          color: PLAYER_COLORS[data.players[id].color % PLAYER_COLORS.length],
+          isAI: false,
+          colorIdx: data.players[id].color,
+        }))
+        .sort((a,b) => a.colorIdx - b.colorIdx);
+      state.pendingConfig = playersArr;
+      state.betAmounts = (data.bets || [5,5,5,5]).slice();
+      state.betReturnScreen = 'roomLobby';
+      renderBetPage();
+      showScreen('bet');
+    }
+
+    if (data.state === 'playing' && !mp.isHost) {
+      if (state.screen !== 'game') {
+        enterGameAsClient(data);
+      }
+    }
+
+    if (data.state === 'finished' && !mp.isHost && state.gameActive && !state.gameOver) {
+      endGame();
+    }
+  });
+
+  mp.listeners = [
+    { ref: mp.playersRef, event: 'value', cb: playersCb },
+    { ref: mp.betsRef, event: 'value', cb: betsCb },
+    { ref: mp.boardShapeRef, event: 'value', cb: boardCb },
+    { ref: mp.gameStateRef, event: 'value', cb: gameStateCb },
+    { ref: mp.shotRef, event: 'value', cb: shotCb },
+    { ref: mp.roomRef, event: 'value', cb: roomCb },
+  ];
+
+  // Polling fallback
+  if (mp.pollTimer) clearInterval(mp.pollTimer);
+  mp.pollTimer = setInterval(() => {
+    if (!mp.isOnlineMode || mp.isHost) return;
+    if (state.screen !== 'game') return;
+    if (!mp.gameStateRef) return;
+    mp.gameStateRef.once('value').then(snap => {
+      const gs = snap.val();
+      if (gs && gs.marbles && gs.marbles.length > 0) {
+        applyGameStateFromHost(gs);
+      }
+    }).catch(() => {});
+  }, 1200);
+}
+
+function enterGameAsClient(data) {
+  const gs = data.gameState;
+  if (!gs || !gs.marbles || gs.marbles.length === 0) {
+    return;
+  }
+  // Akan di-handle oleh applyGameStateFromHost
+  state.players = gs.players.map(p => ({ ...p }));
+  state.totalBet = state.players.reduce((a,p)=>a+p.bet, 0);
+  state.myIndexInPlayers = state.players.findIndex(p => p.name === mp.myName);
+  if (state.myIndexInPlayers < 0) state.myIndexInPlayers = 0;
+  state.gameActive = true;
+  state.gameOver = false;
+  showScreen('game');
+  resizeCanvas();
+  applyGameStateFromHost(gs);
+  if (state.animationId) cancelAnimationFrame(state.animationId);
+  state.lastTime = performance.now();
+  gameLoop(state.lastTime);
+}
+
+function renderLobbyOnline() {
+  const list = document.getElementById('lobbyList');
+  if (!list) return;
+  list.innerHTML = '';
+  for (let i = 0; i < state.lobbyMaxPlayers; i++) {
+    const p = state.lobbyPlayers[i];
+    const d = document.createElement('div');
+    d.className = 'lobby-item';
+    if (p) {
+      const isMe = p.id === mp.myId;
+      const isHost = p.id === (mp.isHost ? mp.myId : '');
+      d.innerHTML = `<span class="color-dot" style="background:${PLAYER_COLORS[p.color % PLAYER_COLORS.length]};"></span> ${p.name}${isMe ? ' (Anda)' : ''}${isHost ? ' 👑' : ''}`;
+    } else {
+      d.innerHTML = `<span class="color-dot" style="background:#555;"></span> <em style="color:#888;">${t('waitingPlayers')}</em>`;
+    }
+    list.appendChild(d);
+  }
+  const enough = state.lobbyPlayers.length >= 2;
+  const startBtn = document.getElementById('startRoomBtn');
+  if (startBtn) startBtn.disabled = !enough || !mp.isHost;
+  document.getElementById('lobbyStatus').textContent = enough
+    ? (mp.isHost ? 'SIAP DILANJUT KE TARUHAN!' : 'MENUNGGU HOST MEMULAI...')
+    : t('waitingPlayers');
+}
+
+function leaveFirebaseRoom() {
+  if (mp.playersRef && mp.myId) mp.playersRef.child(mp.myId).remove();
+  if (mp.roomRef) {
+    if (mp.isHost) mp.roomRef.remove();
+    mp.roomRef.off();
+  }
+  mp.listeners.forEach(l => { if (l.ref) l.ref.off(l.event, l.cb); });
+  mp.listeners = [];
+  if (mp.pollTimer) { clearInterval(mp.pollTimer); mp.pollTimer = null; }
+  mp.roomCode = null;
+  mp.roomRef = null;
+  mp.playersRef = null;
+  mp.betsRef = null;
+  mp.boardShapeRef = null;
+  mp.gameStateRef = null;
+  mp.roomStateRef = null;
+  mp.shotRef = null;
+  mp.isHost = false;
+  mp.isOnlineMode = false;
+  state.lobbyPlayers = [];
+  mp.lastProcessedShotId = 0;
+  if (mp.fallbackTimer) { clearTimeout(mp.fallbackTimer); mp.fallbackTimer = null; }
+}
+
+// ============================================================
+// GAME STATE SYNC
+// ============================================================
+function serializeGameState() {
+  // Hitung posisi sebagai rasio dari canvas HOST
+  const w = canvas.width || 1000;
+  const h = canvas.height || 700;
+  return {
+    players: state.players.map(p => ({ name: p.name, color: p.color, isAI: p.isAI, score: p.score, bet: p.bet })),
+    activePlayerIndex: state.activePlayerIndex,
+    boardShape: state.boardShape,
+    phase: state.phase,
+    totalBet: state.totalBet,
+    hostW: w,
+    hostH: h,
+    marbles: state.marbles.map(m => ({
+      id: m.id, type: m.type, playerId: m.playerId,
+      xr: m.x / w,      // rasio 0..1
+      yr: m.y / h,      // rasio 0..1
+      vx: Math.round(m.vx * 100) / 100,
+      vy: Math.round(m.vy * 100) / 100,
+      radiusRatio: m.radius / Math.min(w, h),
+      color: m.color, alive: m.alive,
+    })),
+    timestamp: Date.now(),
+  };
+}
+
+function applyGameStateFromHost(gs) {
+  if (!gs) return;
+
+  if (gs.players && (state.players.length === 0 || state.players.length !== gs.players.length)) {
+    state.players = gs.players.map(p => ({ ...p }));
+    state.totalBet = state.players.reduce((a,p)=>a+p.bet, 0);
+    state.myIndexInPlayers = state.players.findIndex(p => p.name === mp.myName);
+    if (state.myIndexInPlayers < 0) state.myIndexInPlayers = 0;
+  } else if (gs.players) {
+    gs.players.forEach((gp, i) => { if (state.players[i]) state.players[i].score = gp.score; });
+  }
+
+  const prevActive = state.activePlayerIndex;
+  state.activePlayerIndex = gs.activePlayerIndex;
+  state.boardShape = gs.boardShape || state.boardShape;
+  state.phase = gs.phase || state.phase;
+  state.totalBet = gs.totalBet || state.totalBet;
+
+  // Konversi rasio ke pixel canvas KITA
+  const myW = canvas.width || 1000;
+  const myH = canvas.height || 700;
+  const myMin = Math.min(myW, myH);
+
+  // Build pertama kali
+  if (state.marbles.length === 0 && gs.marbles && gs.marbles.length > 0) {
+    state.marbles = gs.marbles.map(m => ({
+      id: m.id, type: m.type, playerId: m.playerId,
+      x: m.xr * myW,
+      y: m.yr * myH,
+      vx: m.vx || 0,
+      vy: m.vy || 0,
+      radius: m.radiusRatio * myMin,
+      mass: m.type === 'gacoan' ? 1.4 : 1,
+      color: m.color, alive: m.alive,
+    }));
+    state.targets = state.marbles.filter(m => m.type === 'target');
+    state.gacoans = state.marbles.filter(m => m.type === 'gacoan');
+    console.log('✅ CLIENT BUILT', state.marbles.length, 'MARBLES dari host');
+    if (state.screen !== 'game') {
+      showScreen('game');
+      resizeCanvas();
+      if (state.animationId) cancelAnimationFrame(state.animationId);
+      state.lastTime = performance.now();
+      gameLoop(state.lastTime);
+    }
+  } else if (state.marbles.length > 0 && gs.marbles && gs.marbles.length > 0) {
+    // Update posisi & radius
+    const hostMarbles = {};
+    gs.marbles.forEach(m => hostMarbles[m.id] = m);
+    state.marbles.forEach(m => {
+      const hm = hostMarbles[m.id];
+      if (hm) {
+        m.x = hm.xr * myW;
+        m.y = hm.yr * myH;
+        m.vx = hm.vx || 0;
+        m.vy = hm.vy || 0;
+        m.radius = hm.radiusRatio * myMin;
+        m.alive = hm.alive;
+      }
+    });
+  }
+
+  if (prevActive !== state.activePlayerIndex
+      && state.activePlayerIndex === state.myIndexInPlayers
+      && state.phase === PHASE.IDLE
+      && state.gameActive) {
+    showToast('🎯 ' + t('yourTurn'));
+  }
+
+  renderHUDPanel();
+  updateHUDTurn();
+  updateHUDPool();
+}
+
+function sendGameStateToFirebase() {
+  if (!mp.isHost || !mp.gameStateRef) return;
+  mp.gameStateRef.set(serializeGameState());
+}
+
+// ============================================================
+// GACOAN POSITIONS
+// ============================================================
+function getGacoanPositions(numPlayers, w, h, cx, cy, boardRadius) {
+  const margin = GACOAN_RADIUS + 20;
+  const distX = Math.min(w * 0.30, boardRadius + 80);
+  const distY = Math.min(h * 0.30, boardRadius + 80);
+  const positions = [];
+  if (numPlayers === 2) {
+    positions.push({ x: cx - distX, y: cy });
+    positions.push({ x: cx + distX, y: cy });
+  } else if (numPlayers === 3) {
+    positions.push({ x: cx - distX, y: cy - distY * 0.6 });
+    positions.push({ x: cx + distX, y: cy - distY * 0.6 });
+    positions.push({ x: cx + distX, y: cy + distY * 0.6 });
+  } else {
+    positions.push({ x: cx - distX, y: cy - distY * 0.6 });
+    positions.push({ x: cx + distX, y: cy - distY * 0.6 });
+    positions.push({ x: cx + distX, y: cy + distY * 0.6 });
+    positions.push({ x: cx - distX, y: cy + distY * 0.6 });
+  }
+  return positions.map(p => ({
+    x: Math.max(margin, Math.min(w - margin, p.x)),
+    y: Math.max(margin, Math.min(h - margin, p.y)),
+  }));
+}
+
+function clearAllTimers() {
+  if (state.aiTimer) { clearTimeout(state.aiTimer); state.aiTimer = null; }
+  if (state.switchTimer) { clearTimeout(state.switchTimer); state.switchTimer = null; }
+  if (state.settleTimer) { clearTimeout(state.settleTimer); state.settleTimer = null; }
+}
+
+function pointInBoard(x, y) {
+  const w = canvas.width, h = canvas.height;
+  const cx = w/2, cy = h/2;
+  const R = Math.min(w, h) * BOARD_RADIUS_RATIO;
+  if (state.boardShape === BOARD_SHAPE.CIRCLE) {
+    return Math.hypot(x-cx, y-cy) <= R;
+  } else {
+    const verts = [];
+    for (let i = 0; i < 3; i++) {
+      const angle = -Math.PI/2 + (i * 2 * Math.PI / 3);
+      verts.push({ x: cx + Math.cos(angle) * R, y: cy + Math.sin(angle) * R });
+    }
+    const sign = (p1, p2, p3) => (p1.x-p3.x)*(p2.y-p3.y) - (p2.x-p3.x)*(p1.y-p3.y);
+    const d1 = sign({x,y}, verts[0], verts[1]);
+    const d2 = sign({x,y}, verts[1], verts[2]);
+    const d3 = sign({x,y}, verts[2], verts[0]);
+    const hasNeg = (d1 < 0) || (d2 < 0) || (d3 < 0);
+    const hasPos = (d1 > 0) || (d2 > 0) || (d3 > 0);
+    return !(hasNeg && hasPos);
+  }
+}
+
+function buildMarbles() {
+  state.marbles = [];
+  state.targets = [];
+  state.gacoans = [];
+  const w = canvas.width, h = canvas.height;
+  const cx = w / 2, cy = h / 2;
+  const boardR = Math.min(w, h) * BOARD_RADIUS_RATIO;
+
+  let numTargets = state.totalBet;
+  if (numTargets < 10) numTargets = 10;
+  if (numTargets > 30) numTargets = 30;
+
+  let actualTargetRadius = TARGET_RADIUS;
+  if (numTargets > 18) actualTargetRadius = TARGET_RADIUS * 0.88;
+  if (numTargets > 24) actualTargetRadius = TARGET_RADIUS * 0.78;
+
+  let attempts = 0;
+  const maxAttempts = 3000;
+  while (state.targets.length < numTargets && attempts < maxAttempts) {
+    attempts++;
+    const angle = Math.random() * Math.PI * 2;
+    const r = boardR * (0.15 + Math.random() * 0.55);
+    const tx = cx + Math.cos(angle) * r;
+    const ty = cy + Math.sin(angle) * r;
+    if (state.boardShape === BOARD_SHAPE.TRIANGLE && !pointInBoard(tx, ty)) continue;
+    if (state.targets.some(t => Math.hypot(t.x-tx, t.y-ty) < actualTargetRadius * 2.4)) continue;
+    const target = {
+      id: 'target_'+state.targets.length, type:'target',
+      x: tx, y: ty, vx:0, vy:0,
+      radius: actualTargetRadius, mass:1,
+      color: state.targets.length%2===0 ? TARGET_COLOR : TARGET_COLOR_ALT,
+      alive:true,
+    };
+    state.targets.push(target);
+    state.marbles.push(target);
+  }
+
+  const positions = getGacoanPositions(state.players.length, w, h, cx, cy, boardR);
+  state.players.forEach((p, i) => {
+    const pos = positions[i] || { x: 50 + i*40, y: 50 };
+    const g = {
+      id: 'gacoan_'+i, type:'gacoan', playerId:i,
+      x: pos.x, y: pos.y, vx:0, vy:0,
+      radius: GACOAN_RADIUS, mass:1.4, color:p.color, alive:true,
+    };
+    state.gacoans.push(g);
+    state.marbles.push(g);
+  });
+  console.log('🎯 Built', state.targets.length, 'targets');
+}
+
+function resizeCanvas() {
+  const container = canvas.parentElement;
+  if (!container) return;
+  const rect = container.getBoundingClientRect();
+  canvas.width = Math.max(300, Math.floor(rect.width));
+  canvas.height = Math.max(300, Math.floor(rect.height));
+}
+
+function hostStartGame() {
+  resizeCanvas();
+  if (canvas.width < 100) {
+    setTimeout(hostStartGame, 100);
+    return;
+  }
+  state.totalBet = state.players.reduce((a,p) => a + (p.bet || 0), 0);
+  buildMarbles();
+  console.log('🎯 HOST BUILT', state.marbles.length, 'MARBLES');
+  renderHUDPanel();
+  updateHUDTurn();
+  updateHUDPool();
+  showTurnBanner();
+  state.lastTime = performance.now();
+  if (state.animationId) cancelAnimationFrame(state.animationId);
+  gameLoop(state.lastTime);
+  if (state.players[0] && state.players[0].isAI) scheduleAITurn();
+
+  setTimeout(() => {
+    sendGameStateToFirebase();
+    setTimeout(() => sendGameStateToFirebase(), 500);
+    setTimeout(() => sendGameStateToFirebase(), 1500);
+    setTimeout(() => sendGameStateToFirebase(), 3000);
+    setTimeout(() => sendGameStateToFirebase(), 5000);
+  }, 500);
+}
+
+// ============================================================
+// HUD
+// ============================================================
+function renderHUDPanel() {
+  const container = document.getElementById('hudTopLeft');
+  container.innerHTML = '';
+  state.players.forEach((p, i) => {
+    const isActive = i === state.activePlayerIndex && state.gameActive;
+    const isMe = mp.isOnlineMode ? (p.name === mp.myName) : true;
+    const d = document.createElement('div');
+    d.className = 'hud-pill' + (isActive ? ' active-turn' : ' dim');
+    d.innerHTML = `
+      <span class="color-dot" style="background:${p.color};"></span>
+      <span class="hud-name">${p.name}${p.isAI?' 🤖':''}${isMe && mp.isOnlineMode?' ⭐':''}</span>
+      <span class="hud-count"><span class="hud-marble-icon"></span>${p.score}</span>
+    `;
+    container.appendChild(d);
+  });
+}
+function updateHUDTurn() {
+  const p = state.players[state.activePlayerIndex];
+  if (!p) return;
+  document.getElementById('hudTurn').innerHTML = `${t('turnLabel')} <span style="color:${p.color}">${p.name}</span>`;
+}
+function updateHUDPool() {
+  const totalTargets = state.targets ? state.targets.length : 0;
+  const aliveTargets = state.targets ? state.targets.filter(x => x.alive).length : 0;
+  const el = document.getElementById('hudPool');
+  if (el) {
+    if (totalTargets > 0) {
+      el.textContent = `💰 ${state.totalBet} kelereng (${aliveTargets}/${totalTargets} target)`;
+    } else {
+      el.textContent = t('poolLabel', {n: state.totalBet});
+    }
+  }
+}
+function showTurnBanner() {
+  const p = state.players[state.activePlayerIndex];
+  if (!p) return;
+  turnBannerEl.textContent = `${t('turnLabel')} ${p.name.toUpperCase()}`;
+  turnBannerEl.style.color = p.color;
+  turnBannerEl.style.borderColor = p.color;
+  turnBannerEl.classList.add('show');
+  setTimeout(() => turnBannerEl.classList.remove('show'), 1200);
+}
+
+// ============================================================
+// GAME LOOP
+// ============================================================
+function gameLoop(timestamp) {
+  const dt = Math.min(timestamp - state.lastTime, 32);
+  state.lastTime = timestamp;
+  if (state.gameActive && !state.gameOver) {
+    if (state.phase === PHASE.SHOOTING) {
+      if (mp.isHost || !mp.isOnlineMode) {
+        updatePhysics();
+        checkTargetsOut();
+        checkAllStopped();
+      }
+    }
+  }
+  render();
+  state.animationId = requestAnimationFrame(gameLoop);
+  if (mp.isHost && mp.isOnlineMode && state.gameActive) {
+    if (!window._syncCounter) window._syncCounter = 0;
+    window._syncCounter++;
+    if (window._syncCounter % 12 === 0) sendGameStateToFirebase();
+  }
+}
+
+function updatePhysics() {
+  const w = canvas.width, h = canvas.height;
+  state.marbles.forEach(m => {
+    if (!m.alive) return;
+    m.x += m.vx; m.y += m.vy;
+    m.vx *= FRICTION; m.vy *= FRICTION;
+    if (Math.abs(m.vx) < MIN_SPEED) m.vx = 0;
+    if (Math.abs(m.vy) < MIN_SPEED) m.vy = 0;
+    if (m.x - m.radius < 0) { m.x = m.radius; m.vx = -m.vx*WALL_BOUNCE; }
+    if (m.x + m.radius > w) { m.x = w-m.radius; m.vx = -m.vx*WALL_BOUNCE; }
+    if (m.y - m.radius < 0) { m.y = m.radius; m.vy = -m.vy*WALL_BOUNCE; }
+    if (m.y + m.radius > h) { m.y = h-m.radius; m.vy = -m.vy*WALL_BOUNCE; }
+  });
+  for (let i = 0; i < state.marbles.length; i++) {
+    const a = state.marbles[i];
+    if (!a.alive) continue;
+    for (let j = i+1; j < state.marbles.length; j++) {
+      const b = state.marbles[j];
+      if (!b.alive) continue;
+      const dx = b.x-a.x, dy = b.y-a.y;
+      const dist = Math.hypot(dx,dy);
+      const minDist = a.radius + b.radius;
+      if (dist < minDist && dist > 0.001) {
+        const nx = dx/dist, ny = dy/dist;
+        const overlap = minDist - dist;
+        const totalMass = a.mass + b.mass;
+        a.x -= nx * overlap * (b.mass/totalMass);
+        a.y -= ny * overlap * (b.mass/totalMass);
+        b.x += nx * overlap * (a.mass/totalMass);
+        b.y += ny * overlap * (a.mass/totalMass);
+        const dvx = b.vx-a.vx, dvy = b.vy-a.vy;
+        const vn = dvx*nx + dvy*ny;
+        if (vn < 0) {
+          const e = 0.7;
+          const impulse = -(1+e)*vn/totalMass;
+          a.vx -= impulse*b.mass*nx; a.vy -= impulse*b.mass*ny;
+          b.vx += impulse*a.mass*nx; b.vy += impulse*a.mass*ny;
+          sfxCollision();
+        }
+      }
+    }
+  }
+}
+
+function checkTargetsOut() {
+  state.targets.forEach(t2 => {
+    if (!t2.alive) return;
+    if (!pointInBoard(t2.x, t2.y)) {
+      t2.alive = false;
+      const player = state.players[state.activePlayerIndex];
+      player.score += 1;
+      sfxTargetOut();
+      showToast(`+1 kelereng untuk ${player.name}!`);
+      renderHUDPanel();
+    }
+  });
+}
+
+function checkAllStopped() {
+  if (state.phase !== PHASE.SHOOTING) return;
+  const allStopped = state.marbles.every(m =>
+    !m.alive || (Math.abs(m.vx) < 0.05 && Math.abs(m.vy) < 0.05)
+  );
+  if (!allStopped) return;
+  state.marbles.forEach(m => { if (m.alive) { m.vx = 0; m.vy = 0; } });
+  state.phase = PHASE.SETTLING;
+  if (mp.isHost) sendGameStateToFirebase();
+  state.settleTimer = setTimeout(() => {
+    if (state.gameOver) return;
+    if (state.targets.every(t2 => !t2.alive)) {
+      state.phase = PHASE.IDLE;
+      endGame();
+      return;
+    }
+    state.phase = PHASE.SWITCHING;
+    state.switchTimer = setTimeout(() => {
+      if (state.gameOver) return;
+      state.activePlayerIndex = (state.activePlayerIndex + 1) % state.players.length;
+      state.aimingAngle = 0;
+      renderHUDPanel();
+      updateHUDTurn();
+      updateHUDPool();
+      showTurnBanner();
+      sfxTurn();
+      state.phase = PHASE.IDLE;
+      if (mp.isHost) {
+        sendGameStateToFirebase();
+        setTimeout(() => sendGameStateToFirebase(), 300);
+        setTimeout(() => sendGameStateToFirebase(), 800);
+      }
+      if (state.players[state.activePlayerIndex] && state.players[state.activePlayerIndex].isAI) {
+        if (mp.isHost || !mp.isOnlineMode) scheduleAITurn();
+      }
+    }, 350);
+  }, 400);
+}
+
+// ============================================================
+// RENDER
+// ============================================================
+function render() {
+  const w = canvas.width, h = canvas.height;
+  if (w === 0 || h === 0) return;
+  const cx = w/2, cy = h/2;
+  const boardR = Math.min(w,h) * BOARD_RADIUS_RATIO;
+  const grad = ctx.createRadialGradient(cx*0.8, cy*0.8, 20, cx, cy, w*0.8);
+  grad.addColorStop(0, '#a88658');
+  grad.addColorStop(1, '#5e4326');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, w, h);
+
+  if (state.boardShape === BOARD_SHAPE.CIRCLE) {
+    ctx.beginPath();
+    ctx.arc(cx, cy, boardR, 0, Math.PI*2);
+    ctx.strokeStyle = '#d9b382'; ctx.lineWidth = 4;
+    ctx.setLineDash([10, 8]); ctx.stroke(); ctx.setLineDash([]);
+    ctx.beginPath(); ctx.arc(cx, cy, boardR, 0, Math.PI*2);
+    ctx.strokeStyle = '#5a3e20'; ctx.lineWidth = 2; ctx.stroke();
+  } else {
+    const verts = [];
+    for (let i = 0; i < 3; i++) {
+      const angle = -Math.PI/2 + (i * 2 * Math.PI / 3);
+      verts.push({ x: cx + Math.cos(angle) * boardR, y: cy + Math.sin(angle) * boardR });
+    }
+    ctx.beginPath();
+    ctx.moveTo(verts[0].x, verts[0].y);
+    ctx.lineTo(verts[1].x, verts[1].y);
+    ctx.lineTo(verts[2].x, verts[2].y);
+    ctx.closePath();
+    ctx.strokeStyle = '#d9b382'; ctx.lineWidth = 4;
+    ctx.setLineDash([10, 8]); ctx.stroke(); ctx.setLineDash([]);
+    ctx.beginPath();
+    ctx.moveTo(verts[0].x, verts[0].y);
+    ctx.lineTo(verts[1].x, verts[1].y);
+    ctx.lineTo(verts[2].x, verts[2].y);
+    ctx.closePath();
+    ctx.strokeStyle = '#5a3e20'; ctx.lineWidth = 2; ctx.stroke();
+  }
+
+  state.targets.forEach(t2 => { if (t2.alive) drawMarble(t2.x, t2.y, t2.radius, t2.color); });
+  state.gacoans.forEach((g, i) => {
+    if (!g.alive) return;
+    const isActive = i === state.activePlayerIndex && state.gameActive && !state.gameOver;
+    if (isActive) {
+      const pulse = 1 + 0.3 * Math.sin(performance.now() / 200);
+      ctx.beginPath();
+      ctx.arc(g.x, g.y, g.radius + 8 * pulse, 0, Math.PI * 2);
+      ctx.strokeStyle = g.color;
+      ctx.lineWidth = 3;
+      ctx.globalAlpha = 0.8;
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+    drawMarble(g.x, g.y, g.radius, g.color);
+  });
+
+  if (state.gameActive && !state.gameOver && state.phase === PHASE.IDLE) {
+    const activePlayer = state.players[state.activePlayerIndex];
+    const isMyTurn = mp.isOnlineMode ? (state.activePlayerIndex === state.myIndexInPlayers) : true;
+    if (activePlayer && !activePlayer.isAI && isMyTurn) {
+      const g = state.gacoans[state.activePlayerIndex];
+      if (g && g.alive) drawAimArrow(g.x, g.y, state.aimingAngle, 26, g.color);
+    }
+  }
+
+  if (state.currentDrag) {
+    const g = state.gacoans[state.currentDrag.playerId];
+    if (g && g.alive) {
+      const power = state.currentDrag.power;
+      ctx.beginPath();
+      ctx.arc(g.x, g.y, g.radius + 5, -Math.PI/2, -Math.PI/2 + Math.PI*2*power);
+      ctx.strokeStyle = `rgba(255,220,100,${0.4 + power*0.5})`;
+      ctx.lineWidth = 3; ctx.lineCap = 'round'; ctx.stroke();
+    }
+  }
+}
+
+function drawMarble(x, y, r, color) {
+  ctx.beginPath();
+  ctx.arc(x+2, y+3, r, 0, Math.PI*2);
+  ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.fill();
+  const grad = ctx.createRadialGradient(x-r*0.3, y-r*0.3, r*0.1, x, y, r);
+  grad.addColorStop(0, '#ffffff');
+  grad.addColorStop(0.2, color);
+  grad.addColorStop(1, shadeColor(color, -30));
+  ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2);
+  ctx.fillStyle = grad; ctx.fill();
+  ctx.beginPath(); ctx.arc(x-r*0.3, y-r*0.3, r*0.3, 0, Math.PI*2);
+  ctx.fillStyle = 'rgba(255,255,255,0.7)'; ctx.fill();
+  ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2);
+  ctx.strokeStyle = 'rgba(0,0,0,0.2)'; ctx.lineWidth = 1; ctx.stroke();
+}
+
+function drawAimArrow(x, y, angle, length, color) {
+  const startX = x + Math.cos(angle) * (GACOAN_RADIUS + 6);
+  const startY = y + Math.sin(angle) * (GACOAN_RADIUS + 6);
+  const endX = startX + Math.cos(angle) * length;
+  const endY = startY + Math.sin(angle) * length;
+  ctx.beginPath(); ctx.moveTo(startX, startY); ctx.lineTo(endX, endY);
+  ctx.strokeStyle = color; ctx.lineWidth = 3; ctx.lineCap='round'; ctx.stroke();
+  const headLen = 8, headAngle = 0.5;
+  ctx.beginPath();
+  ctx.moveTo(endX, endY);
+  ctx.lineTo(endX - headLen*Math.cos(angle-headAngle), endY - headLen*Math.sin(angle-headAngle));
+  ctx.lineTo(endX - headLen*Math.cos(angle+headAngle), endY - headLen*Math.sin(angle+headAngle));
+  ctx.closePath(); ctx.fillStyle = color; ctx.fill();
+  const pulse = 1 + 0.2*Math.sin(performance.now()/200);
+  ctx.beginPath(); ctx.arc(startX, startY, 3*pulse, 0, Math.PI*2);
+  ctx.fillStyle = '#ffd966'; ctx.fill();
+}
+
+function shadeColor(color, percent) {
+  let R = parseInt(color.substring(1,3),16);
+  let G = parseInt(color.substring(3,5),16);
+  let B = parseInt(color.substring(5,7),16);
+  R = Math.min(255, Math.max(0, R+percent));
+  G = Math.min(255, Math.max(0, G+percent));
+  B = Math.min(255, Math.max(0, B+percent));
+  return '#' + ((1<<24)+(R<<16)+(G<<8)+B).toString(16).slice(1);
+}
+
+// ============================================================
+// INPUT
+// ============================================================
+function getCanvasCoords(e) {
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+  const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+  return { x: (clientX-rect.left)*scaleX, y: (clientY-rect.top)*scaleY };
+}
+
+function handlePointerDown(e) {
+  if (!state.gameActive || state.gameOver) return;
+  if (state.phase !== PHASE.IDLE) return;
+  const isMyTurn = !mp.isOnlineMode || (state.activePlayerIndex === state.myIndexInPlayers);
+  if (!isMyTurn) {
+    showToast('⏳ ' + t('notYourTurn'));
+    return;
+  }
+  if (state.players[state.activePlayerIndex].isAI) return;
+  const pos = getCanvasCoords(e);
+  const g = state.gacoans[state.activePlayerIndex];
+  if (!g || !g.alive) return;
+  const dist = Math.hypot(pos.x-g.x, pos.y-g.y);
+  if (dist < g.radius + 25) {
+    state.currentDrag = {
+      playerId: state.activePlayerIndex,
+      startX: pos.x, startY: pos.y,
+      currentX: pos.x, currentY: pos.y,
+      power: 0,
+    };
+    e.preventDefault();
+  }
+}
+function handlePointerMove(e) {
+  if (!state.currentDrag) return;
+  e.preventDefault();
+  const pos = getCanvasCoords(e);
+  state.currentDrag.currentX = pos.x;
+  state.currentDrag.currentY = pos.y;
+  const dx = pos.x - state.currentDrag.startX;
+  const dy = pos.y - state.currentDrag.startY;
+  const dist = Math.hypot(dx, dy);
+  state.aimingAngle = Math.atan2(-dy, -dx);
+  const maxDrag = Math.min(canvas.width, canvas.height) * 0.25;
+  state.currentDrag.power = Math.min(dist / maxDrag, 1);
+}
+function handlePointerUp(e) {
+  if (!state.currentDrag) return;
+  const playerIdx = state.currentDrag.playerId;
+  const g = state.gacoans[playerIdx];
+  const power = state.currentDrag.power;
+  state.currentDrag = null;
+
+  if (g && power > 0.05) {
+    const speed = power * 18;
+    const vx = Math.cos(state.aimingAngle) * speed;
+    const vy = Math.sin(state.aimingAngle) * speed;
+
+    if (mp.isOnlineMode) {
+      if (mp.isHost) {
+        g.vx = vx; g.vy = vy;
+        state.phase = PHASE.SHOOTING;
+        sfxShoot();
+        sendGameStateToFirebase();
+      } else {
+        g.vx = vx; g.vy = vy;
+        state.phase = PHASE.SHOOTING;
+        sfxShoot();
+        if (mp.shotRef) {
+          const shotId = Date.now() * 1000 + Math.floor(Math.random() * 1000);
+          mp.shotRef.set({
+            id: shotId,
+            playerIdx: playerIdx,
+            vx: vx,
+            vy: vy,
+            from: mp.myId,
+            timestamp: Date.now(),
+          });
+        }
+      }
+    } else {
+      g.vx = vx; g.vy = vy;
+      state.phase = PHASE.SHOOTING;
+      sfxShoot();
+    }
+  }
+}
+
+canvas.addEventListener('pointerdown', handlePointerDown);
+canvas.addEventListener('pointermove', handlePointerMove);
+canvas.addEventListener('pointerup', handlePointerUp);
+canvas.addEventListener('pointercancel', handlePointerUp);
+canvas.addEventListener('pointerleave', handlePointerUp);
+
+// ============================================================
+// AI
+// ============================================================
+function scheduleAITurn() {
+  if (state.gameOver) return;
+  if (mp.isOnlineMode && !mp.isHost) return;
+  state.aiThinking = true;
+  showToast('🤖 COMPUTER SEDANG MEMBIDIK...');
+  const delay = 900 + Math.random()*700;
+  state.aiTimer = setTimeout(() => {
+    if (state.gameOver || !state.gameActive || state.phase !== PHASE.IDLE) {
+      state.aiThinking = false; return;
+    }
+    performAIShot();
+  }, delay);
+}
+function performAIShot() {
+  const g = state.gacoans[state.activePlayerIndex];
+  if (!g || !g.alive) { state.aiThinking = false; return; }
+  let nearestTarget = null, nearestDist = Infinity;
+  state.targets.forEach(t2 => {
+    if (!t2.alive) return;
+    const d = Math.hypot(t2.x-g.x, t2.y-g.y);
+    if (d < nearestDist) { nearestDist = d; nearestTarget = t2; }
+  });
+  let angle, power;
+  const diff = state.aiDifficulty;
+  if (nearestTarget) {
+    const baseAngle = Math.atan2(nearestTarget.y-g.y, nearestTarget.x-g.x);
+    let angleError = 0, powerError = 0;
+    if (diff === 'easy') { angleError = 0.3; powerError = 0.35; }
+    else if (diff === 'normal') { angleError = 0.14; powerError = 0.2; }
+    else { angleError = 0.05; powerError = 0.08; }
+    angle = baseAngle + (Math.random()-0.5)*2*angleError;
+    const idealPower = Math.min(nearestDist/180, 1.2) * 16;
+    power = idealPower * (1 + (Math.random()-0.5)*2*powerError);
+  } else {
+    angle = Math.random()*Math.PI*2;
+    power = 10 + Math.random()*8;
+  }
+  power = Math.max(4, Math.min(power, 22));
+  state.aimingAngle = angle;
+  render();
+  setTimeout(() => {
+    if (state.gameOver || state.phase !== PHASE.IDLE) { state.aiThinking = false; return; }
+    g.vx = Math.cos(angle)*power;
+    g.vy = Math.sin(angle)*power;
+    state.phase = PHASE.SHOOTING;
+    state.aiThinking = false;
+    sfxShoot();
+    if (mp.isHost) sendGameStateToFirebase();
+  }, 400);
+}
+
+// ============================================================
+// END GAME
+// ============================================================
+function endGame() {
+  if (state.gameOver) return;
+  state.gameOver = true;
+  state.gameActive = false;
+  clearAllTimers();
+  if (mp.isHost && mp.roomStateRef) {
+    mp.roomStateRef.set('finished');
+    sendGameStateToFirebase();
+  }
+  const sorted = [...state.players].sort((a,b) => b.score - a.score);
+  const winner = sorted[0];
+  const totalBet = state.players.reduce((a,p)=>a+p.bet, 0);
+  sfxWin();
+  const overlay = document.createElement('div');
+  overlay.style.cssText = `position:fixed; inset:0; background:rgba(0,0,0,0.9); display:flex; align-items:center; justify-content:center; z-index:1000; padding:20px;`;
+  overlay.innerHTML = `
+    <div style="background:linear-gradient(145deg,#5a4327,#2f1f0e); border:4px solid #b89b6b; border-radius:36px; padding:22px 28px; max-width:500px; width:100%; text-align:center; box-shadow:0 20px 40px black; max-height:92vh; overflow:auto;">
+      <div style="font-size:2.2rem;">🏆</div>
+      <div style="font-size:1.6rem; font-weight:800; color:#ffd966; margin:4px 0 8px;">PEMENANG</div>
+      <div style="font-size:1.3rem; font-weight:700; color:${winner.color}; margin-bottom:10px;">${winner.name}</div>
+      <div style="background:#2e1f0e; border:2px dashed #ffd966; border-radius:20px; padding:10px; margin-bottom:14px;">
+        <div style="color:#ffd966; font-weight:800; font-size:1.05rem;">💰 MENANG TARUHAN: ${totalBet} KELERENG</div>
+      </div>
+      <div style="background:#1f1307cc; border-radius:18px; padding:10px; margin-bottom:14px; border:1px solid #b89b6b; text-align:left;">
+        ${sorted.map((p,i)=>{
+          const medal = i===0?'🥇':i===1?'🥈':i===2?'🥉':'4️⃣';
+          const winBet = i===0 ? `<span style="color:#ffd966;">+${totalBet - p.bet}</span>` : `<span style="color:#e74c3c;">−${p.bet}</span>`;
+          return `<div style="display:flex; justify-content:space-between; padding:5px 10px; color:#f0e0b0; font-weight:600; border-bottom:1px solid #5a4327; font-size:0.9rem;">
+            <span>${medal} ${p.name}</span>
+            <span><span class="hud-marble-icon"></span> ${p.score} ${winBet}</span>
+          </div>`;
+        }).join('')}
+      </div>
+      <button class="btn" id="playAgainBtn" style="width:100%; margin-bottom:8px;">MAIN LAGI</button>
+      <button class="btn btn-secondary" id="backToMenuBtn" style="width:100%;">KEMBALI KE MENU</button>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  document.getElementById('playAgainBtn').onclick = () => {
+    document.body.removeChild(overlay);
+    const config = state.players.map(p => ({ name:p.name, color:p.color, isAI:p.isAI }));
+    const bets = state.players.map(p => p.bet);
+    initGame(config, bets);
+  };
+  document.getElementById('backToMenuBtn').onclick = () => {
+    document.body.removeChild(overlay);
+    leaveFirebaseRoom();
+    mp.isOnlineMode = false;
+    showScreen('home');
+    state.gameActive = false;
+    if (state.animationId) cancelAnimationFrame(state.animationId);
+  };
+}
+
+// ============================================================
+// BET PAGE
+// ============================================================
+function openBetPage(config, returnScreen) {
+  state.pendingConfig = config;
+  state.betAmounts = config.map(() => 5);
+  state.betReturnScreen = returnScreen || 'play';
+  renderBetPage();
+  showScreen('bet');
+}
+
+function renderBetPage() {
+  const container = document.getElementById('betPlayers');
+  container.innerHTML = '';
+  const config = state.pendingConfig;
+  if (!config) return;
+  config.forEach((p, i) => {
+    const card = document.createElement('div');
+    card.className = 'bet-card';
+    const isAI = p.isAI;
+    const isMine = mp.isOnlineMode ? (p.name === mp.myName) : !isAI;
+
+    let nameHtml;
+    if (isAI) {
+      nameHtml = `<span class="bet-name-static">${p.name} 🤖</span>`;
+    } else if (isMine) {
+      nameHtml = `<input class="bet-name-input" type="text" maxlength="12" value="${p.name}" data-name-idx="${i}" />`;
+    } else {
+      nameHtml = `<span class="bet-name-static readonly">${p.name}</span>`;
+    }
+
+    let controlsHtml;
+    if (isMine && !isAI) {
+      controlsHtml = `
+        <div class="bet-controls">
+          <button data-bet-dec="${i}">−</button>
+          <span id="betVal_${i}">${state.betAmounts[i]}</span>
+          <button data-bet-inc="${i}">+</button>
+        </div>
+      `;
+    } else {
+      controlsHtml = `
+        <div class="bet-controls bet-readonly">
+          <span id="betVal_${i}">${state.betAmounts[i]}</span>
+        </div>
+      `;
+    }
+
+    card.innerHTML = `
+      <span class="color-dot" style="background:${p.color};"></span>
+      ${nameHtml}
+      ${controlsHtml}
+      <div class="bet-label">${t('kelereng')}${!isMine && !isAI ? ' 🔒' : ''}</div>
+    `;
+    container.appendChild(card);
+  });
+  updateBetPool();
+}
+
+function updateBetPool() {
+  state.totalBet = state.betAmounts.reduce((a,b)=>a+b, 0);
+  const el = document.getElementById('betPoolInfo');
+  if (el) {
+    const poolCount = state.pendingConfig ? state.pendingConfig.length : 0;
+    const totalBetForPlayers = state.betAmounts.slice(0, poolCount).reduce((a,b)=>a+b, 0);
+    const arenaTargets = Math.max(10, Math.min(30, totalBetForPlayers));
+    el.textContent = `💰 Total Taruhan: ${totalBetForPlayers} kelereng → ${arenaTargets} target`;
+  }
+  state.betAmounts.forEach((v, i) => {
+    const e = document.getElementById(`betVal_${i}`);
+    if (e) e.textContent = v;
+  });
+}
+
+// ============================================================
+// INIT GAME
+// ============================================================
+function initGame(playersConfig, betAmounts) {
+  state.players = playersConfig.map((p, i) => ({
+    id: i, name: p.name,
+    color: p.color || PLAYER_COLORS[i % PLAYER_COLORS.length],
+    isAI: p.isAI || false,
+    score: 0, bet: betAmounts ? betAmounts[i] : 5,
+  }));
+  state.totalBet = state.players.reduce((a,p)=>a+p.bet, 0);
+  state.myIndexInPlayers = state.players.findIndex(p => p.name === mp.myName);
+  if (state.myIndexInPlayers < 0) state.myIndexInPlayers = 0;
+  state.activePlayerIndex = 0;
+  state.gameOver = false;
+  state.gameActive = true;
+  state.phase = PHASE.IDLE;
+  state.currentDrag = null;
+  state.aimingAngle = 0;
+  state.aiThinking = false;
+  clearAllTimers();
+  state.marbles = [];
+  state.targets = [];
+  state.gacoans = [];
+  mp.lastProcessedShotId = 0;
+  if (mp.fallbackTimer) { clearTimeout(mp.fallbackTimer); mp.fallbackTimer = null; }
+  showScreen('game');
+
+  if (mp.isHost || !mp.isOnlineMode) {
+    hostStartGame();
+    if (mp.isHost && mp.roomStateRef) {
+      setTimeout(() => {
+        mp.roomStateRef.set('playing');
+      }, 200);
+    }
+  } else {
+    resizeCanvas();
+    renderHUDPanel();
+    updateHUDTurn();
+    updateHUDPool();
+    if (state.animationId) cancelAnimationFrame(state.animationId);
+    state.lastTime = performance.now();
+    gameLoop(state.lastTime);
+
+    setTimeout(() => {
+      if (state.marbles.length === 0 && mp.isOnlineMode && !mp.isHost) {
+        console.log('⚠️ Client still waiting for host marbles after 4s');
+      }
+    }, 4000);
+  }
+}
+
+// ============================================================
+// MODAL
+// ============================================================
+function showConfirmModal(title, message, onYes) {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML = `
+    <div class="modal-box">
+      <h3>${title}</h3>
+      <p>${message}</p>
+      <div class="modal-actions">
+        <button class="btn" id="modalYes">YA</button>
+        <button class="btn btn-secondary" id="modalNo">TIDAK</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  document.getElementById('modalYes').onclick = () => { document.body.removeChild(overlay); onYes(); };
+  document.getElementById('modalNo').onclick = () => { document.body.removeChild(overlay); };
+}
+
+// ============================================================
+// EVENT DELEGATION
+// ============================================================
+document.addEventListener('click', (e) => {
+  const shapeBtn = e.target.closest('[data-shape]');
+  if (shapeBtn) {
+    if (mp.isOnlineMode && !mp.isHost) {
+      showToast('🔒 Hanya host yang bisa memilih papan');
+      return;
+    }
+    state.boardShape = shapeBtn.dataset.shape;
+    document.querySelectorAll('.shape-btn').forEach(b => b.classList.remove('active'));
+    shapeBtn.classList.add('active');
+    sfxBet();
+    if (mp.isOnlineMode && mp.isHost && mp.boardShapeRef) {
+      mp.boardShapeRef.set(state.boardShape);
+    }
+    return;
+  }
+
+  const inc = e.target.closest('[data-bet-inc]');
+  const dec = e.target.closest('[data-bet-dec]');
+  if (inc || dec) {
+    const el = inc || dec;
+    const idx = parseInt(el.dataset.betInc || el.dataset.betDec);
+    const config = state.pendingConfig;
+    if (!config || !config[idx]) return;
+    const ownerName = config[idx].name;
+    const isMine = mp.isOnlineMode ? (ownerName === mp.myName) : true;
+    if (!isMine) { showToast('🔒 Bukan taruhan Anda'); return; }
+    if (inc) state.betAmounts[idx] = Math.min(50, state.betAmounts[idx] + 1);
+    else state.betAmounts[idx] = Math.max(1, state.betAmounts[idx] - 1);
+    sfxBet();
+    updateBetPool();
+    if (mp.isOnlineMode && mp.betsRef) mp.betsRef.set(state.betAmounts);
+    return;
+  }
+
+  const tM = e.target.closest('#toggleMusic');
+  if (tM) {
+    progress.musicEnabled = !progress.musicEnabled;
+    saveProgress(progress);
+    initAudio();
+    updateSoundUI();
+    if (progress.musicEnabled) { musicPausedByVisibility = false; startMusic(); }
+    else stopMusic();
+    return;
+  }
+  const tS = e.target.closest('#toggleSfx');
+  if (tS) {
+    progress.sfxEnabled = !progress.sfxEnabled;
+    saveProgress(progress);
+    initAudio();
+    updateSoundUI();
+    if (progress.sfxEnabled) sfxBet();
+    return;
+  }
+  const langBtn = e.target.closest('[data-lang]');
+  if (langBtn) {
+    progress.language = langBtn.dataset.lang;
+    saveProgress(progress);
+    updateSoundUI();
+    applyTranslations();
+    showToast(progress.language === 'id' ? 'Bahasa: Indonesia' : 'Language: English');
+    return;
+  }
+  const target = e.target.closest('[data-action]');
+  if (!target) return;
+  const action = target.dataset.action;
+  switch (action) {
+    case 'play': showScreen('play'); break;
+    case 'multiplayer': showScreen('multiplayer'); break;
+    case 'vscomputer': showScreen('vsComputer'); break;
+    case 'howto': showScreen('howTo'); break;
+    case 'settings': updateSoundUI(); showScreen('settings'); break;
+    case 'backHome': leaveFirebaseRoom(); mp.isOnlineMode = false; showScreen('home'); break;
+    case 'backMultiplayer': showScreen('multiplayer'); break;
+    case 'backPlayMode': showScreen('play'); break;
+    case 'backFromBet':
+      if (mp.isOnlineMode && mp.isHost && mp.roomStateRef) mp.roomStateRef.set('lobby');
+      showScreen(state.betReturnScreen || 'play');
+      break;
+    case 'local2p':
+      mp.isOnlineMode = false;
+      openBetPage([
+        { name:'PEMAIN 1', color:PLAYER_COLORS[0], isAI:false },
+        { name:'PEMAIN 2', color:PLAYER_COLORS[1], isAI:false },
+      ], 'play'); break;
+    case 'local3p':
+      mp.isOnlineMode = false;
+      openBetPage([
+        { name:'PEMAIN 1', color:PLAYER_COLORS[0], isAI:false },
+        { name:'PEMAIN 2', color:PLAYER_COLORS[1], isAI:false },
+        { name:'PEMAIN 3', color:PLAYER_COLORS[2], isAI:false },
+      ], 'play'); break;
+    case 'local4p':
+      mp.isOnlineMode = false;
+      openBetPage([
+        { name:'PEMAIN 1', color:PLAYER_COLORS[0], isAI:false },
+        { name:'PEMAIN 2', color:PLAYER_COLORS[1], isAI:false },
+        { name:'PEMAIN 3', color:PLAYER_COLORS[2], isAI:false },
+        { name:'PEMAIN 4', color:PLAYER_COLORS[3], isAI:false },
+      ], 'play'); break;
+    case 'gotoBetVsComputer': {
+      mp.isOnlineMode = false;
+      const name = document.getElementById('playerNameVs').value.trim() || 'PEMAIN 1';
+      state.aiDifficulty = document.getElementById('aiDifficulty').value;
+      openBetPage([
+        { name:name, color:PLAYER_COLORS[0], isAI:false },
+        { name:'COMPUTER', color:PLAYER_COLORS[1], isAI:true },
+      ], 'vsComputer');
+      break;
+    }
+    case 'startBetGame': {
+      if (!state.pendingConfig) break;
+      const nameInputs = document.querySelectorAll('.bet-name-input');
+      nameInputs.forEach(inp => {
+        const idx = parseInt(inp.dataset.nameIdx);
+        if (state.pendingConfig[idx]) {
+          state.pendingConfig[idx].name = inp.value.trim() || state.pendingConfig[idx].name;
+        }
+      });
+      if (mp.isOnlineMode && mp.isHost && mp.roomRef) {
+        const bets = state.betAmounts;
+        const playersConfig = state.pendingConfig;
+        if (mp.betsRef) mp.betsRef.set(bets);
+        if (mp.boardShapeRef) mp.boardShapeRef.set(state.boardShape);
+        initGame(playersConfig, bets);
+      } else {
+        initGame(state.pendingConfig, state.betAmounts);
+      }
+      state.pendingConfig = null;
+      break;
+    }
+    case 'createRoom': showScreen('createRoom'); break;
+    case 'doCreateRoom': {
+      if (!firebaseReady || !db) { showToast('❌ Firebase belum siap.'); return; }
+      const name = document.getElementById('hostName').value.trim() || 'Amelia';
+      const maxP = parseInt(document.getElementById('maxPlayers').value);
+      state.lobbyMaxPlayers = maxP;
+      mp.isOnlineMode = true;
+      const btn = e.target.closest('[data-action="doCreateRoom"]');
+      if (btn) { btn.disabled = true; btn.textContent = 'MEMBUAT...'; }
+      createFirebaseRoom(generateRoomCode(), name, maxP, () => {
+        if (btn) { btn.disabled = false; btn.textContent = t('createRoom'); }
+        listenToRoom();
+        setTimeout(() => { if (mp.roomStateRef) mp.roomStateRef.set('lobby'); }, 200);
+      });
+      break;
+    }
+    case 'copyRoomCode':
+      navigator.clipboard.writeText(mp.roomCode).then(()=>showToast('📋 Kode disalin!')).catch(()=>showToast('📋 '+mp.roomCode));
+      break;
+    case 'inviteFriend': {
+      const code = mp.roomCode;
+      const text = `Ayo main KELERENG NUSANTARA! Buka game, pilih MULTIPLAYER → GABUNG ROOM, masukkan kode: ${code}`;
+      if (navigator.share) navigator.share({ title:'KELERENG NUSANTARA', text }).catch(()=>{});
+      else navigator.clipboard.writeText(text).then(()=>showToast('📋 Pesan undangan disalin!')).catch(()=>showToast('🔗 Kode: '+code));
+      break;
+    }
+    case 'goToRoomBet': {
+      if (!mp.isHost) { showToast('Hanya host yang bisa memulai'); return; }
+      if (state.lobbyPlayers.length < 2) return;
+      const sorted = [...state.lobbyPlayers].sort((a,b) => a.color - b.color);
+      const config = sorted.map((p) => ({
+        name: p.name,
+        color: PLAYER_COLORS[p.color % PLAYER_COLORS.length],
+        isAI: false,
+      }));
+      state.pendingConfig = config;
+      state.betAmounts = [5,5,5,5];
+      state.betReturnScreen = 'roomLobby';
+      if (mp.betsRef) mp.betsRef.set(state.betAmounts);
+      if (mp.roomStateRef) mp.roomStateRef.set('bet');
+      if (mp.boardShapeRef) mp.boardShapeRef.set(state.boardShape);
+      renderBetPage();
+      showScreen('bet');
+      break;
+    }
+    case 'leaveRoom':
+      leaveFirebaseRoom();
+      mp.isOnlineMode = false;
+      state.pendingConfig = null;
+      state.betAmounts = [5,5,5,5];
+      state.totalBet = 0;
+      state.lobbyPlayers = [];
+      showScreen('multiplayer');
+      break;
+    case 'joinRoom': showScreen('joinRoom'); break;
+    case 'doJoinRoom': {
+      if (!firebaseReady || !db) {
+        document.getElementById('joinStatus').textContent = '❌ Firebase belum siap.';
+        return;
+      }
+      const code = document.getElementById('joinRoomCode').value.trim().toUpperCase();
+      const name = document.getElementById('joinName').value.trim() || 'Budi';
+      if (!code.startsWith('KLR-') || code.length < 7) {
+        document.getElementById('joinStatus').textContent = '❌ Format: KLR-XXXX';
+        return;
+      }
+      document.getElementById('joinStatus').textContent = '⏳ Menghubungkan...';
+      mp.isOnlineMode = true;
+      joinFirebaseRoom(code, name, () => { listenToRoom(); });
+      break;
+    }
+    case 'tryQuitGame':
+      showConfirmModal('KELUAR DARI PERMAINAN?', 'Yakin ingin keluar dari permainan?', () => {
+        clearAllTimers();
+        state.gameActive = false; state.gameOver = true;
+        state.phase = PHASE.IDLE;
+        if (state.animationId) cancelAnimationFrame(state.animationId);
+        if (mp.isOnlineMode) {
+          leaveFirebaseRoom();
+          mp.isOnlineMode = false;
+          showScreen('multiplayer');
+        } else {
+          showScreen('home');
+        }
+      });
+      break;
+  }
+});
+
+document.addEventListener('input', (e) => {
+  if (e.target && e.target.id === 'volSlider') {
+    progress.volumeLevel = parseInt(e.target.value) / 100;
+    saveProgress(progress);
+    const label = document.getElementById('volLabel');
+    if (label) label.textContent = Math.round(progress.volumeLevel * 100) + '%';
+    e.target.style.setProperty('--val', (progress.volumeLevel*100)+'%');
+    updateVolumeGains();
+  }
+});
+
+document.addEventListener('change', (e) => {
+  if (e.target && e.target.classList.contains('bet-name-input')) {
+    const idx = parseInt(e.target.dataset.nameIdx);
+    const config = state.pendingConfig;
+    if (!config || !config[idx]) return;
+    const oldName = config[idx].name;
+    const isMine = mp.isOnlineMode ? (oldName === mp.myName) : true;
+    if (!isMine) return;
+    const newName = e.target.value.trim() || oldName;
+    if (newName === oldName) return;
+    config[idx].name = newName;
+    state.pendingConfig[idx].name = newName;
+    if (mp.isOnlineMode && oldName === mp.myName) {
+      mp.myName = newName;
+      if (mp.playersRef) mp.playersRef.child(mp.myId).update({ name: newName });
+    }
+  }
+});
+
+// ============================================================
+// TOAST
+// ============================================================
+let toastTimer = null;
+function showToast(msg) {
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>toastEl.classList.remove('show'), 2500);
+}
+
+// ============================================================
+// STARTUP
+// ============================================================
+window.addEventListener('resize', () => {
+  if (state.screen === 'game') {
+    resizeCanvas();
+    // Recompute posisi marbles dari rasio yang tersimpan
+    if (state.marbles.length > 0) {
+      // Sudah di-scale dengan canvas sebelumnya, tidak bisa re-scale
+      // Cukup render ulang
+    }
+  }
+});
+
+showScreen('home');
+applyTranslations();
+updateSoundUI();
+
+if (!firebaseReady) {
+  setTimeout(() => showToast('⚠️ Firebase tidak terhubung.'), 1500);
+}
+
+function autoStartMusicOnce() {
+  initAudio();
+  if (progress.musicEnabled) startMusic();
+  document.removeEventListener('click', autoStartMusicOnce);
+  document.removeEventListener('touchstart', autoStartMusicOnce);
+  document.removeEventListener('keydown', autoStartMusicOnce);
+}
+document.addEventListener('click', autoStartMusicOnce);
+document.addEventListener('touchstart', autoStartMusicOnce);
+document.addEventListener('keydown', autoStartMusicOnce);
+
+setTimeout(()=>showToast('🎮 KELERENG NUSANTARA'), 600);
+</script>
+</body>
+</html>
